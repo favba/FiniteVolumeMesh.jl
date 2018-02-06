@@ -17,35 +17,3 @@ end
 
 volume(a::TriangleCell,n1::AbstractNode,n2::AbstractNode,n3::AbstractNode) = triangle_area(n1,n2,n3)
 volume(a::TriangleCell,nodes::Vector{<:Node2D}) = volume(a, nodes[a.node1], nodes[a.node2], nodes[a.node3])
-
-issame(a,b) = a[1] == b[2] && a[2] == b[1]
-
-cell_faces(a::TriangleCell) = (a.node1, a.node2), (a.node2, a.node3), (a.node3, a.node1)
-
-#function get_cell_faces(a::TriangleCell)
-#  a1 = a.node1
-#  a2 = a.node2
-#  a3 = a.node3
-#  r1 = min(a1, a2, a3)
-#  r3 = max(a1, a2, a3)
-#  r2 = if r1 == a1
-#    if r3 == a3
-#      a2
-#    else
-#      a3
-#    end
-#  elseif r1 == a2
-#    if r3 == a1
-#      a3
-#    else
-#      a1
-#    end
-#  elseif r1 == a3
-#    if r3 == a1
-#      a2
-#    else
-#      a1
-#    end
-#  end
-#  return (r1,r2), (r2,r3), (r3,r1)
-#end
