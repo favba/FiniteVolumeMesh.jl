@@ -21,6 +21,8 @@ function writevtk(outputname::String,nodes::Vector{<:AbstractNode},cells::Vector
   end
 end
 
+@inline writevtk(oname::String,m::AbstractMesh) = writevtk(oname,m.nodes,m.cells)
+
 function append_points_scalar_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
   open(vtkfile,"a") do out
     header && println(out,"POINT_DATA ",length(data))
@@ -32,6 +34,17 @@ function append_points_scalar_data(vtkfile::String,dataname::String,data::Abstra
   end
 end
 
+function append_points_vector_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
+  open(vtkfile,"a") do out
+    header && println(out,"POINT_DATA ",size(data)[2])
+    println(out,"VECTORS ",dataname," float")
+    for j in indices(data)[2]
+      println(out,join((data[1,j], data[2,j], 0)," "))
+    end
+  end
+end
+
+
 function append_cells_scalar_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
   open(vtkfile,"a") do out
     header && println(out,"CELL_DATA ",length(data))
@@ -39,6 +52,16 @@ function append_cells_scalar_data(vtkfile::String,dataname::String,data::Abstrac
     println(out,"LOOKUP_TABLE default")
     for el in data
       println(out,el)
+    end
+  end
+end
+
+function append_cells_vector_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
+  open(vtkfile,"a") do out
+    header && println(out,"CELL_DATA ",size(data)[2])
+    println(out,"VECTORS ",dataname," float")
+    for j in indices(data)[2]
+      println(out,join((data[1,j], data[2,j], 0)," "))
     end
   end
 end
