@@ -14,6 +14,6 @@ function aspect_ratio(a::TriangleCell,m::AbstractMesh)
   l3 = distance(m.nodes[a.node3], m.nodes[a.node1])
   return min(l1,l2,l3)/max(l1,l2,l3)
 end
-
+cell_faces(a::TriangleCell) = (a.node1, a.node2), (a.node2, a.node3), (a.node3, a.node1)
 volume(a::TriangleCell,n1::AbstractNode,n2::AbstractNode,n3::AbstractNode) = triangle_area(n1,n2,n3)
 volume(a::TriangleCell,nodes::Vector{<:Node2D}) = volume(a, nodes[a.node1], nodes[a.node2], nodes[a.node3])
