@@ -1,3 +1,18 @@
+#=
+Idea: 
+
+AbstractFace2Node
+AbstractBFace2Node
+AbstractFace2Cell
+AbstractBFace2Cell
+
+struct Face2Node2D
+struct Face2Cell{NodeType} (Face{NodeType} below)
+struct BFace2Cell{NodeType} (BoundaryFace{NodeType} below)
+
+struct Face2Node{PolygonType}
+=#
+
 struct Face32{NodeType} <: AbstractFace
   cell1::UInt32 # Owner cell index
   cell2::UInt32 # Neighbor cell index
