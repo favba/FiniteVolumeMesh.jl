@@ -90,52 +90,36 @@ function cell_connectivity(cells::Vector{TriangleCell},bfaces,bc_face,nodes)
   return faces, c2f, bf2c
 end
 
-function face_connectivity(faces::Vector{Tuple{UInt,UInt}},c2f,cells::Vector{TriangleCell},nodes)
+function face_connectivity(faces::Vector{Tuple{UInt,UInt}},c2f,cells::Vector{T},nodes) where {T<:AbstractCell}
   NF = length(faces)
   NC = length(c2f)
-  f2c = Vector{Face{Node2D{Float64}}}(NF)
+  NodeType = nodetype(T)
+  f2c = Vector{Face{NodeType}}(NF)
 
   for i=1:NF
     notfound = true
     j=0
     cell1 = UInt(0) 
     cell2 = UInt(0) 
+
     while notfound
       j+=1
-      ce = c2f[j]
-
-      if ce[1] == i
-        notfound = false
-        cell1 = UInt(j)
-      elseif ce[2] == i
-        notfound = false
-        cell1 = UInt(j)
-      elseif ce[3] == i
+      if i in c2f[j]
         notfound = false
         cell1 = UInt(j)
       end
-
     end
     
     for l=(j+1):NC
-      ce = c2f[l]
-
-      if ce[1] == i
-        cell2 = UInt(l)
-        break
-      elseif ce[2] == i
-        cell2 = UInt(l)
-        break
-      elseif ce[3] == i
+      if i in c2f[l]
         cell2 = UInt(l)
         break
       end
-
     end
 
     @assert (cell1 != 0) & (cell2 != 0)
-    f2c[i] = Face{Node2D{Float64}}(cell1, cell2,  
-      normal_to_2Dline(faces[i],nodes), 
+    f2c[i] = Face{NodeType}(cell1, cell2,  
+      area(faces[i],nodes), 
       volume(cells[cell1],nodes), volume(cells[cell2],nodes))
 
   end

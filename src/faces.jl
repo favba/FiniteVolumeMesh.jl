@@ -20,3 +20,5 @@ struct BoundaryFace{NodeType} <: AbstractBoundaryFace
   vc::Float64 # Owner Cell Volume
   btype::UInt64 # Boundary type
 end
+
+area(face::Tuple{UInt,UInt},nodes::Vector{<:Node2D}) =  normal_to_2Dline(face,nodes)
