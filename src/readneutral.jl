@@ -6,21 +6,21 @@ function readneutral(inputfile::String)
   open(inputfile) do input
 
     NN = parse(Int,readline(input))
-    nodes = Vector{Node2D{Float64}}(NN) #Pre-allocation a vector of Node2D{Float64} with NN elemetns
+    nodes = Vector{Vec2D{Float64}}(NN) #Pre-allocation a vector of Vec2D{Float64} with NN elemetns
     
     for i=1:NN
-      nodes[i] = Node2D(string_to_numbers(Float64,readline(input))...)
+      nodes[i] = Vec2D(string_to_numbers(Float64,readline(input))...)
     end
 
     NC = parse(Int,readline(input))
 
-    cells = Vector{TriangleCell}(NC)
+    cells = Vector{TriangleCell{Float64}}(NC)
     bc_cell = Vector{UInt}(NC)
 
     for i=1:NC
       a = string_to_numbers(UInt,readline(input)) 
       bc_cell[i] = a[1]
-      cells[i] = TriangleCell(a[2],a[3],a[4])
+      cells[i] = TriangleCell{Float64}(a[2],a[3],a[4])
     end
 
     NBF = parse(Int,readline(input))

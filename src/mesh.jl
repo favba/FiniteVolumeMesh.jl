@@ -1,29 +1,29 @@
 
-struct Homogeneous2DMesh{CellType} <: Abstract2DMesh
-  nodes::Vector{Node2D{Float64}}
+struct Homogeneous2DMesh{T,CellType} <: Abstract2DMesh
+  nodes::Vector{Vec2D{T}}
   cells::Vector{CellType} # c2n
   faces::Vector{Tuple{UInt,UInt}} # f2n
   bfaces::Vector{Tuple{UInt,UInt}} # bf2n
   #c2c::Vector{UInt}
   c2f::Vector{Tuple{Int,Int,Int}}
-  f2c::Vector{Face{Node2D{Float64}}}
-  bf2c::Vector{BoundaryFace{Node2D{Float64}}}
+  f2c::Vector{Face{Vec2D{T}}}
+  bf2c::Vector{BoundaryFace{Vec2D{T}}}
 end
 
 function Homogeneous2DMesh(inputfile::String)
   nodes, cells, bc_cell, bfaces, bc_face = readneutral(inputfile)
   faces, c2f, bf2c = cell_connectivity(cells,bfaces,bc_face,nodes)
   f2c = face_connectivity(faces,c2f,cells,nodes)
-  return Homogeneous2DMesh{eltype(cells)}(nodes,cells,faces,bfaces,c2f,f2c,bf2c)
+  return Homogeneous2DMesh{Float64,eltype(cells)}(nodes,cells,faces,bfaces,c2f,f2c,bf2c)
 end
 
-function cell_connectivity(cells::Vector{TriangleCell},bfaces,bc_face,nodes)
+function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
   NC = length(cells)
   NBF = length(bfaces)
 
   faces = Vector{Tuple{UInt,UInt}}(0)
   c2f = Vector{Tuple{Int,Int,Int}}(NC)
-  bf2c = Vector{BoundaryFace{Node2D{Float64}}}(NBF)
+  bf2c = Vector{BoundaryFace{Vec2D{Float64}}}(NBF)
   
   nnbc = 0
   for (i,cell) in enumerate(cells)
@@ -40,17 +40,17 @@ function cell_connectivity(cells::Vector{TriangleCell},bfaces,bc_face,nodes)
     nnbc < NBF && for (j,el) in enumerate(bfaces)
       if t1 == el
         c2f_i1 = -j
-        bf2c[j] = BoundaryFace{Node2D{Float64}}(i, normal_to_2Dline(t1,nodes), volume(cell,nodes),bc_face[j])
+        bf2c[j] = BoundaryFace{Vec2D{Float64}}(i, normal_to_2Dline(t1,nodes), volume(cell,nodes),bc_face[j])
         t1notinfaces = false
         nnbc+=1
       elseif t2 == el
         c2f_i2 = -j
-        bf2c[j] = BoundaryFace{Node2D{Float64}}(i, normal_to_2Dline(t2,nodes), volume(cell,nodes),bc_face[j])
+        bf2c[j] = BoundaryFace{Vec2D{Float64}}(i, normal_to_2Dline(t2,nodes), volume(cell,nodes),bc_face[j])
         t2notinfaces = false
         nnbc+=1
       elseif t3 == el
         c2f_i3 = -j
-        bf2c[j] = BoundaryFace{Node2D{Float64}}(i, normal_to_2Dline(t3,nodes), volume(cell,nodes),bc_face[j])
+        bf2c[j] = BoundaryFace{Vec2D{Float64}}(i, normal_to_2Dline(t3,nodes), volume(cell,nodes),bc_face[j])
         t3notinfaces = false
         nnbc+=1
       end
@@ -93,8 +93,8 @@ end
 function face_connectivity(faces::Vector{Tuple{UInt,UInt}},c2f,cells::Vector{T},nodes) where {T<:AbstractCell}
   NF = length(faces)
   NC = length(c2f)
-  NodeType = nodetype(T)
-  f2c = Vector{Face{NodeType}}(NF)
+  VecType = nodetype(T)
+  f2c = Vector{Face{VecType}}(NF)
 
   for i=1:NF
     notfound = true
@@ -118,7 +118,7 @@ function face_connectivity(faces::Vector{Tuple{UInt,UInt}},c2f,cells::Vector{T},
     end
 
     @assert (cell1 != 0) & (cell2 != 0)
-    f2c[i] = Face{NodeType}(cell1, cell2,  
+    f2c[i] = Face{VecType}(cell1, cell2,  
       area(faces[i],nodes), 
       volume(cells[cell1],nodes), volume(cells[cell2],nodes))
 

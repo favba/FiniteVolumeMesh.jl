@@ -1,4 +1,4 @@
-function writevtk(outputname::String,nodes::Vector{<:AbstractNode},cells::Vector{<:TriangleCell})
+function writevtk(outputname::String,nodes::Vector{<:AbstractVec},cells::Vector{<:TriangleCell})
   info("Writing to $outputname")
   open(outputname,"w") do output
     NN = length(nodes)
@@ -36,10 +36,10 @@ end
 
 function append_points_vector_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
   open(vtkfile,"a") do out
-    header && println(out,"POINT_DATA ",size(data)[2])
+    header && println(out,"POINT_DATA ",length(data))
     println(out,"VECTORS ",dataname," float")
-    for j in indices(data)[2]
-      println(out,join((data[1,j], data[2,j], 0)," "))
+    for el in data
+      println(out,join(pos(el)," "))
     end
   end
 end
@@ -58,10 +58,10 @@ end
 
 function append_cells_vector_data(vtkfile::String,dataname::String,data::AbstractArray,header::Bool)
   open(vtkfile,"a") do out
-    header && println(out,"CELL_DATA ",size(data)[2])
+    header && println(out,"CELL_DATA ",length(data))
     println(out,"VECTORS ",dataname," float")
-    for j in indices(data)[2]
-      println(out,join((data[1,j], data[2,j], 0)," "))
+    for el in data
+      println(out,join(pos(el)," "))
     end
   end
 end
