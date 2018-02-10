@@ -1,5 +1,3 @@
-abstract type AbstractVec{T} <: DenseArray{T,1} end
-
 Base.getindex(a::AbstractVec,I::Integer) = getfield(a,fieldname(typeof(a),I))
 Base.IndexStyle(a::Type{<:AbstractVec}) = Base.IndexLinear()
 
