@@ -14,24 +14,24 @@ function readneutral(inputfile::String)
 
     NC = parse(Int,readline(input))
 
-    cells = Vector{TriangleCell{Float64}}(NC)
+    cells = Vector{TriangleCell}(NC)
     bc_cell = Vector{UInt}(NC)
 
     for i=1:NC
       a = string_to_numbers(UInt,readline(input)) 
       bc_cell[i] = a[1]
-      cells[i] = TriangleCell{Float64}(a[2],a[3],a[4])
+      cells[i] = TriangleCell((a[2],a[3],a[4]))
     end
 
     NBF = parse(Int,readline(input))
 
-    bf2n =  Vector{Tuple{UInt,UInt}}(NBF)
+    bf2n =  Vector{Face2Node{2}}(NBF)
     bc_face = Vector{UInt}(NBF)
 
     for i=1:NBF
       a = string_to_numbers(UInt,readline(input))
       bc_face[i] = a[1]
-      bf2n[i] = (a[2],a[3])
+      bf2n[i] = Face2Node{2}((a[2],a[3]))
     end
 
     return nodes, cells, bc_cell, bf2n, bc_face

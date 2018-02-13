@@ -1,39 +1,37 @@
-#=
-Idea: 
 
-AbstractFace2Node
-AbstractBFace2Node
-AbstractFace2Cell
-AbstractBFace2Cell
+area(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = 1 
+area(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  normal_to_2Dline(face.ind,nodes)
 
-struct Face2Node2D
-struct Face2Cell{NodeType} (Face{NodeType} below)
-struct BFace2Cell{NodeType} (BoundaryFace{NodeType} below)
+center(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = nodes[face[1]] 
+center(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  line_center(face.ind,nodes)
 
-struct Face2Node{PolygonType}
-=#
-
-struct Face32{NodeType} <: AbstractFace
-  cell1::UInt32 # Owner cell index
-  cell2::UInt32 # Neighbor cell index
-  n::NodeType # Normal vector
-  vc1::Float32 # Cell 1 Volume
-  vc2::Float32 # Cell 2 Volume
+struct Face2Node{N} <: AbstractFace2Node{N}
+  ind::NTuple{N,UInt}
 end
 
-struct Face{NodeType} <: AbstractFace
-  cell1::UInt64 # Owner cell index
-  cell2::UInt64 # Neighbor cell index
-  n::NodeType # Normal vector
-  vc1::Float64 # Cell 1 Volume
-  vc2::Float64 # Cell 2 Volume
+abstract type AbstractFace2Cell <: NTupleWrap{2,UInt} end
+
+abstract type AbstractBFace2Cell <: NTupleWrap{1,UInt} end
+
+struct Face2Cell <: AbstractFace2Cell
+  ind::Tuple{UInt,UInt}
 end
 
-struct BoundaryFace{NodeType} <: AbstractBoundaryFace
-  cell::UInt64 # Owner cell index
-  n::NodeType # Normal vector
-  vc::Float64 # Owner Cell Volume
-  btype::UInt64 # Boundary type
+
+struct BFace2Cell <: AbstractBFace2Cell
+  ind::Tuple{UInt}
 end
 
-area(face::Tuple{UInt,UInt},nodes::Vector{<:Vec2D}) =  normal_to_2Dline(face,nodes)
+struct Face2CellLoop{NBF,NF,VecType}
+  bf2c::Vector{BFace2Cell}
+  bft::Vector{UInt} # List of of boundary faces types
+  bfn::Vector{VecType} # List of normals of boundary faces
+  bfc::Vector{VecType} # List of centers of boundary faces
+  bcv::Vector{Float64} # List of volumes of boundary faces owner cells
+  bccenter::Vector{VecType} # List of centers of boundary faces owner cells
+  f2c::Vector{Face2Cell}
+  fn::Vector{VecType} # List of normals of faces
+  fc::Vector{VecType} # List of centers of faces
+  cv::Vector{NTuple{2,Float64}} # List of volumes of faces owner cells
+  ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
+end
