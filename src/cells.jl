@@ -9,6 +9,15 @@ struct TriangleCell <: AbstractCell2Node2D{3,3}
   ind::Tuple{UInt,UInt,UInt}
 end
 
+function Base.show(io::IO,t::TriangleCell)
+  compact = get(io, :compact, false)
+
+  if !compact
+      print(io,"Triangle")
+  end
+  print(io,"(",t[1],",",t[2],",",t[3],")") 
+end
+
 vtkcelltype(a::TriangleCell) = 5
 
 function aspect_ratio(a::TriangleCell,m::AbstractMesh)
