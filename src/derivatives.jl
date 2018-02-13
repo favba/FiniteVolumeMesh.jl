@@ -26,7 +26,7 @@ function div!(out::Array{<:Number,1}, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c
     el = bf2c[i]
     j = el[1]
     n = bfn[i]
-    flux = (n ⋅ f_at_bface[i]) * (1/bcv[i])
+    flux = (f_at_bface[i] ⋅ n) * (1/bcv[i])
     out[j] += flux
   end  
 
@@ -35,7 +35,7 @@ function div!(out::Array{<:Number,1}, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c
     j1 = el[1]
     j2 = el[2]
     n = fn[i]
-    flux = n ⋅ f_at_face[i]
+    flux = f_at_face[i] ⋅ n
     v = cv[i]
     out[j1] += flux * (1/v[1])
     out[j2] -= flux * (1/v[2])
