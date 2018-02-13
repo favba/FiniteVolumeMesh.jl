@@ -23,5 +23,6 @@ include("faces.jl")
 include("mesh.jl")
 include("readneutral.jl")
 include("writevtk.jl")
+include("derivatives.jl")
 
 end # module
