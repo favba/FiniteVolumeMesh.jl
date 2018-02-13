@@ -9,6 +9,15 @@ struct Face2Node{N} <: AbstractFace2Node{N}
   ind::NTuple{N,UInt}
 end
 
+function Base.show(io::IO,f::Face2Node{N}) where N
+  compact = get(io, :compact, false)
+
+  if !compact
+      print(io,"$(N)DFace")
+  end
+  print(io,"(",join(f.ind,","),")") 
+end
+
 abstract type AbstractFace2Cell <: NTupleWrap{2,UInt} end
 
 abstract type AbstractBFace2Cell <: NTupleWrap{1,UInt} end
@@ -17,9 +26,28 @@ struct Face2Cell <: AbstractFace2Cell
   ind::Tuple{UInt,UInt}
 end
 
+function Base.show(io::IO,f::Face2Cell)
+  compact = get(io, :compact, false)
+
+  if !compact
+      print(io,"Interface of cells ",f[1]," and ",f[2])
+  else
+    print(io,"(",join(f.ind,","),")") 
+  end
+end
 
 struct BFace2Cell <: AbstractBFace2Cell
   ind::Tuple{UInt}
+end
+
+function Base.show(io::IO,f::BFace2Cell)
+  compact = get(io, :compact, false)
+
+  if !compact
+      print(io,"Boundary face of cell ",f[1])
+  else
+    print(io,f[1]) 
+  end
 end
 
 struct Face2CellLoop{NBF,NF,VecType}
