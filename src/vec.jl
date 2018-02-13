@@ -1,4 +1,4 @@
-Base.getindex(a::AbstractVec,I::Integer) = getfield(a,fieldname(typeof(a),I))
+Base.getindex(a::AbstractVec,I::Integer) = getfield(a,I)
 Base.IndexStyle(a::Type{<:AbstractVec}) = Base.IndexLinear()
 
 @inline xpos(a::AbstractVec) = a.x
@@ -59,3 +59,27 @@ Base.:/(b::Vec2D{T},a::T2) where {T,T2<:Number} = Vec2D{promote_type(T,T2)}(xpos
 Base.dot(a::Vec2D,b::Vec2D) = muladd(xpos(a), xpos(b), ypos(a)*ypos(b))
 Base.norm(a::Vec2D) = sqrt(muladd(xpos(a), xpos(a), ypos(a)^2))
 Base.cross(a::Vec2D,b::Vec2D) = xpos(a)*ypos(b) - ypos(a)*xpos(b)
+
+struct Vec1D{T<:Number} <: AbstractVec{T}
+  x::T
+end
+
+Base.size(a::Vec1D) = (1,)
+Base.length(a::Vec1D) = 1
+Base.linearindices(a::Vec1D) = Base.OneTo(1)
+Base.indices(a::Vec1D) = (Base.OneTo(1),)
+Base.zero(a::Type{Vec1D{T}}) where {T} = Vec1D{T}(zero(T))
+
+@inline ypos(a::Vec1D{T}) where {T} = zero(T)
+@inline zpos(a::Vec1D{T}) where {T} = zero(T)
+
+Base.:+(a::Vec1D{T},b::Vec1D{T2}) where {T,T2} = Vec1D{promote_type(T,T2)}(xpos(a)+xpos(b))
+Base.:-(a::Vec1D{T},b::Vec1D{T2}) where {T,T2} = Vec1D{promote_type(T,T2)}(xpos(a)-xpos(b))
+Base.:*(a::T,b::Vec1D{T2}) where {T<:Number,T2} = Vec1D{promote_type(T,T2)}(a*xpos(b))
+Base.:*(b::Vec1D{T},a::T2) where {T,T2<:Number} = Vec1D{promote_type(T,T2)}(a*xpos(b))
+Base.:/(b::Vec1D{T},a::T2) where {T,T2<:Number} = Vec1D{promote_type(T,T2)}(xpos(b)/a)
+
+
+Base.dot(a::Vec1D,b::Vec1D) = xpos(a)*xpos(b)
+Base.norm(a::Vec1D) = abs(xpos(a))
+Base.cross(a::Vec1D,b::Vec1D) = 0
