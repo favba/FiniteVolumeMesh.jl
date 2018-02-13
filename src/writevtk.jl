@@ -12,7 +12,7 @@ function writevtk(outputname::String,nodes::Vector{<:AbstractVec},cells::Vector{
     println(output,"CELLS ",NC," ",4*NC)
     for cell in cells
       #Juila starts indexing at 1, so we subtract 1 from node index.
-      println(output,"3 ",cell.node1-1, " ", cell.node2-1, " ",cell.node3-1)
+      println(output,"3 ",cell[1]-1, " ", cell[2]-1, " ",cell[3]-1)
     end
     println(output,"CELL_TYPES ",NC)
     for cell in cells
