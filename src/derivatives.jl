@@ -7,18 +7,21 @@ function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,fl
   end  
 
   @inbounds for i=1:NF
-    el = f2c[i]
-    j1 = el[1]
-    j2 = el[2]
+    j1,j2 = f2c[i]
     flux = fn[i] * f_at_face[i] 
     v = cv[i]
     out[j1] += flux/v[1]
-
     out[j2] -= flux/v[2]
   end  
 end
 
 @inline gradient!(out, ff, fbf, floop) = gradient!(out, ff, fbf, floop.bf2c,floop.bfn,floop.bcv,floop.f2c,floop.fn,floop.cv,floop)
+
+@inline function gradient(ff,fbf,mesh)
+  out = zeros(eltype(mesh.nodes),length(mesh.cells))
+  gradient!(out,ff,fbf,mesh.f2cloops)
+  return out
+end
 
 function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, floops::Face2CellLoop{NBF,NF,VecT}) where {NBF,NF,VecT}
   fill!(out,zero(eltype(out)))
