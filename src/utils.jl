@@ -5,7 +5,7 @@ Base.eltype(a::NTupleWrap{N,T}) where {N,T} = T
 Base.length(a::NTupleWrap{N,T}) where {N,T} = N
 Base.size(t::NTupleWrap, d) = (d == 1) ? length(t) : throw(ArgumentError("invalid tuple dimension $d"))
 
-Base.start(t::NTupleWrap) = start(t.ind)
+Base.start(t::NTupleWrap) =  1
 Base.next(t::NTupleWrap,i) = next(t.ind,i)
 Base.done(t::NTupleWrap,i) = done(t.ind,i)
 

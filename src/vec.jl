@@ -1,4 +1,4 @@
-Base.getindex(a::AbstractVec,I::Integer) = getfield(a,I)
+@inline Base.@propagate_inbounds Base.getindex(a::AbstractVec,I::Integer) = getfield(a,I)
 Base.IndexStyle(a::Type{<:AbstractVec}) = Base.IndexLinear()
 
 @inline xpos(a::AbstractVec) = a.x

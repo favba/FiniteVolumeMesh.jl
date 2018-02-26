@@ -1,9 +1,9 @@
 
-area(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = 1 
-area(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  normal_to_2Dline(face.ind,nodes)
+@inline area(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = 1 
+@inline area(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  normal_to_2Dline(face.ind,nodes)
 
-center(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = nodes[face[1]] 
-center(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  line_center(face.ind,nodes)
+@inline center(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = @inbounds nodes[face[1]] 
+@inline center(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  line_center(face.ind,nodes)
 
 struct Face2Node{N} <: AbstractFace2Node{N}
   ind::NTuple{N,UInt}

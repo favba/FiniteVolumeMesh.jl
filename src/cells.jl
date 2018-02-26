@@ -21,25 +21,27 @@ end
 vtkcelltype(a::TriangleCell) = 5
 
 function aspect_ratio(a::TriangleCell,m::AbstractMesh)
-  l1 = distance(m.nodes[a[1]], m.nodes[a[2]])
-  l2 = distance(m.nodes[a[2]], m.nodes[a[3]])
-  l3 = distance(m.nodes[a[3]], m.nodes[a[1]])
+  @inbounds begin
+    l1 = distance(m.nodes[a[1]], m.nodes[a[2]])
+    l2 = distance(m.nodes[a[2]], m.nodes[a[3]])
+    l3 = distance(m.nodes[a[3]], m.nodes[a[1]])
+  end
   return min(l1,l2,l3)/max(l1,l2,l3)
 end
 
 cell_faces(a::TriangleCell) = Face2Node{2}((a[1], a[2])), Face2Node{2}((a[2], a[3])), Face2Node{2}((a[3], a[1]))
 
 @inline volume(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_area(n1,n2,n3)
-@inline volume(a::TriangleCell,nodes::Vector{<:Vec2D}) = volume(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
+@inline volume(a::TriangleCell,nodes::Vector{<:Vec2D}) = @inbounds volume(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
 
 @inline perimeter(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_perimeter(n1,n2,n3)
-@inline perimeter(a::TriangleCell,nodes::Vector{<:Vec2D}) = perimeter(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
+@inline perimeter(a::TriangleCell,nodes::Vector{<:Vec2D}) = @inbounds perimeter(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
 
 @inline mean_dx(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = 4*volume(a,n1,n2,n3)/perimeter(a,n1,n2,n3)
-@inline mean_dx(a::TriangleCell,nodes::Vector{<:Vec2D}) = mean_dx(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
+@inline mean_dx(a::TriangleCell,nodes::Vector{<:Vec2D}) = @inbounds mean_dx(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
 
 @inline center(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_center(n1,n2,n3)
-@inline center(a::TriangleCell,nodes::Vector{<:Vec2D}) = center(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
+@inline center(a::TriangleCell,nodes::Vector{<:Vec2D}) = @inbounds center(a, nodes[a[1]], nodes[a[2]], nodes[a[3]])
 
 abstract type AbstractCell2Face{T,N} <: NTupleWrap{N,Int} end
 
