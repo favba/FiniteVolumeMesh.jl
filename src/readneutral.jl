@@ -33,7 +33,7 @@ function readneutral(inputfile::String)
       bc_face[i] = a[1]
       bf2n[i] = Face2Node{2}((a[2],a[3]))
     end
-
+    info("Number of nodes: $NN\nNumber of Cells: $NC\nNumber of Boundary Faces: $NBF")
     return nodes, cells, bc_cell, bf2n, bc_face
   end
 end
