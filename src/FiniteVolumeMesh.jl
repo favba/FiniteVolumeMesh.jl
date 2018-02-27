@@ -20,9 +20,11 @@ include("vec.jl")
 include("geometry.jl")
 include("cells.jl")
 include("faces.jl")
+include("boundaryconditions.jl")
 include("mesh.jl")
 include("readneutral.jl")
 include("writevtk.jl")
 include("derivatives.jl")
+include("laplacian.jl")
 
 end # module

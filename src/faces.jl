@@ -63,3 +63,18 @@ struct Face2CellLoop{NBF,NF,VecType}
   cv::Vector{NTuple{2,Float64}} # List of 1/volumes of faces owner cells
   ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
 end
+
+struct FaceSimpleInterpolation{T,NF} <: AbstractVector{T}
+  Tc::Vector{T}
+  f2c::Vector{Face2Cell}
+end
+
+Base.size(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = (NF,)
+Base.length(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = NF
+Base.linearindices(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = Base.OneTo(NF)
+Base.IndexStyle(::Type{FaceSimpleInterpolation}) = IndexLinear()
+@inline Base.@propagate_inbounds function Base.getindex(a::FaceSimpleInterpolation,I)
+  j1,j2 = a.f2c[I]
+  Tc = a.Tc
+  return 0.5*(Tc[j1]+Tc[j2])
+end
