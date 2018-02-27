@@ -2,7 +2,7 @@ function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,fl
   fill!(out,zero(eltype(out)))
   @inbounds for i=1:NBF
     j = bf2c[i][1]
-    flux = bfn[i] * f_at_bface[i] / bcv[i]
+    flux = bfn[i] * f_at_bface[i] * bcv[i]
     out[j] += flux
   end  
 
@@ -10,8 +10,8 @@ function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,fl
     j1,j2 = f2c[i]
     flux = fn[i] * f_at_face[i] 
     v = cv[i]
-    out[j1] += flux/v[1]
-    out[j2] -= flux/v[2]
+    out[j1] += flux*v[1]
+    out[j2] -= flux*v[2]
   end  
 end
 
@@ -29,7 +29,7 @@ function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, f
     el = bf2c[i]
     j = el[1]
     n = bfn[i]
-    flux = (f_at_bface[i] ⋅ n) * (1/bcv[i])
+    flux = (f_at_bface[i] ⋅ n) * bcv[i]
     out[j] += flux
   end  
 
@@ -40,8 +40,8 @@ function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, f
     n = fn[i]
     flux = f_at_face[i] ⋅ n
     v = cv[i]
-    out[j1] += flux * (1/v[1])
-    out[j2] -= flux * (1/v[2])
+    out[j1] += flux * v[1]
+    out[j2] -= flux * v[2]
   end  
 end
 

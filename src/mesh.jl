@@ -51,7 +51,7 @@ function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
         bf2c[j] = BFace2Cell((i,))
         bfn[j] = area(t1,nodes) #future work: make this a call to area(face,nodes)
         bfc[j] = center(t1,nodes)
-        bcv[j] = volume(cell,nodes)
+        bcv[j] = 1/volume(cell,nodes)
         bccenter[j] = center(cell,nodes)
         t1notinfaces = false
         nnbc+=1
@@ -60,7 +60,7 @@ function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
         bf2c[j] = BFace2Cell((i,))
         bfn[j] = area(t2,nodes)
         bfc[j] = center(t2,nodes)
-        bcv[j] = volume(cell,nodes)
+        bcv[j] = 1/volume(cell,nodes)
         bccenter[j] = center(cell,nodes)
         t2notinfaces = false
         nnbc+=1
@@ -69,7 +69,7 @@ function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
         bf2c[j] = BFace2Cell((i,))
         bfn[j] =  area(t3,nodes)
         bfc[j] = center(t3,nodes)
-        bcv[j] = volume(cell,nodes)
+        bcv[j] = 1/volume(cell,nodes)
         bccenter[j] = center(cell,nodes)
         t3notinfaces = false
         nnbc+=1
@@ -145,7 +145,7 @@ function face_connectivity(faces::Vector{<:Face2Node},c2f,cells::Vector{T},nodes
     f2c[i] = Face2Cell((cell1, cell2))
     fn[i] =  area(faces[i],nodes) 
     fc[i] =  center(faces[i],nodes) 
-    cv[i] =  (volume(cells[cell1],nodes), volume(cells[cell2],nodes))
+    cv[i] =  (1/volume(cells[cell1],nodes), 1/volume(cells[cell2],nodes))
     ccenter[i] =  (center(cells[cell1],nodes), center(cells[cell2],nodes))
 
   end
