@@ -2,7 +2,7 @@
 @inline area(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = 1 
 @inline area(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  normal_to_2Dline(face.ind,nodes)
 
-@inline center(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}) = @inbounds nodes[face[1]] 
+@inline function center(face::AbstractFace2Node1D,nodes::Vector{<:Vec1D}); @inbounds r = nodes[face[1]]; return r; end 
 @inline center(face::AbstractFace2Node2D,nodes::Vector{<:Vec2D}) =  line_center(face.ind,nodes)
 
 struct Face2Node{N} <: AbstractFace2Node{N}
