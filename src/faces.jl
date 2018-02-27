@@ -55,11 +55,11 @@ struct Face2CellLoop{NBF,NF,VecType}
   bft::Vector{UInt} # List of of boundary faces types
   bfn::Vector{VecType} # List of normals of boundary faces
   bfc::Vector{VecType} # List of centers of boundary faces
-  bcv::Vector{Float64} # List of volumes of boundary faces owner cells
+  bcv::Vector{Float64} # List of 1/volumes of boundary faces owner cells
   bccenter::Vector{VecType} # List of centers of boundary faces owner cells
   f2c::Vector{Face2Cell}
   fn::Vector{VecType} # List of normals of faces
   fc::Vector{VecType} # List of centers of faces
-  cv::Vector{NTuple{2,Float64}} # List of volumes of faces owner cells
+  cv::Vector{NTuple{2,Float64}} # List of 1/volumes of faces owner cells
   ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
 end
