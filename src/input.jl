@@ -60,3 +60,28 @@ function read_input(filename::String)
 end
 
 read_input() = read_input("input.txt")
+
+function show_parameters(d::Dict)
+  msg = "Parameters from input:\n"
+  for el in d
+    msg *= string(el[1],": ",el[2],"\n")
+  end
+  msg*="\n"
+  return msg
+end
+
+const available_laplacians = ("Method-B","Method-Gauss","Corr-Gauss")
+
+function get_laplacian_method(Tc,mesh,d)
+  method = d[:gradtype]
+  if method == "Method-B"
+    return MethodB()
+  elseif method == "Method-Gauss"
+    return Gauss(Tc,mesh)
+  elseif method == "Corr-Gauss"
+    return CorrectedGauss(Tc,mesh)
+  else
+    warn("Gradtype \"",method,"\" not implemented. Using \"Corr-Gauss\". Available options are: ",available_laplacians)
+    return CorrectedGauss(Tc,mesh)
+  end
+end
