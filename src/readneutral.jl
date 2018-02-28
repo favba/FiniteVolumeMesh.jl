@@ -1,7 +1,7 @@
 
-string_to_numbers(T::DataType,str::String) = parse.(T,split(str," ",keep=false))
+string_to_numbers(T::DataType,str::AbstractString) = parse.(T,split(str," ",keep=false))
 
-function readneutral(inputfile::String)
+function readneutral(inputfile::AbstractString)
   info("Reading $inputfile file")
   open(inputfile) do input
 

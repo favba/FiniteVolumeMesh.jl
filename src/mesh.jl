@@ -11,7 +11,7 @@ struct HomogeneousMesh{VecType<:AbstractVec,CellType<:AbstractCell2Node,CNF,Face
   f2cloops::Face2CellLoop{NBF,NF,VecType}
 end
 
-function HomogeneousMesh(inputfile::String)
+function HomogeneousMesh(inputfile::AbstractString)
   nodes, cells, bc_cell, bfaces, bc_face = readneutral(inputfile)
   faces, c2f, bf2c, bfn, bfc, bcv, bccenter = cell_connectivity(cells,bfaces,bc_face,nodes)
   f2c, fn, fc, cv, ccenter = face_connectivity(faces,c2f,cells,nodes)
@@ -20,6 +20,8 @@ function HomogeneousMesh(inputfile::String)
   f2cloops = Face2CellLoop{length(bfaces),length(faces),eltype(nodes)}(bf2c,bc_face,bfn,bfc,bcv,bccenter,f2c,fn,fc,cv,ccenter)
   return HomogeneousMesh{eltype(nodes),CellType,CNF,eltype(faces),length(bfaces),length(faces)}(nodes,cells,faces,bfaces,c2f,f2cloops)
 end
+
+HomogeneousMesh(d::Dict) = HomogeneousMesh(d[:meshfilename])
 
 function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
   NC = length(cells)

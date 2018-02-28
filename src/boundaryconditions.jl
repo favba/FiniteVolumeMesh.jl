@@ -12,3 +12,17 @@ function flux_dirichlet(a::Dirichlet,bfc,bfn,k,bccenter,Tc)
   qf = k*(Tf-Tc)*AfoLac
   return qf
 end
+
+function boundary_conditions(d::Dict)
+  btypes = d[:BCs]
+  bcond = ()
+  for el in btypes
+    if el[1] == :value
+      b = Dirichlet{el[2]}()
+    elseif el[1] == :grad
+      b = Neumman{el[2]}()
+    end
+    bcond = (bcond...,b)
+  end
+  return bcond
+end
