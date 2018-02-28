@@ -9,7 +9,7 @@ end
 
 # Method B
 function laplacian_mB!(out,cfield,k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,ccenter,cv,floops::Face2CellLoop{NBF,NF,VT}) where {NBF,NF,VT}
-  fill!(out,zero(eltype(out)))
+  #fill!(out,zero(eltype(out)))
   @inbounds for i=1:NBF
     j = bf2c[i][1]
     qf = bpart(bcond[bt[i]],i,j,bfc,bfn,k,bccenter,cfield)
@@ -48,9 +48,9 @@ end
 
 # Gauss Method
 function laplacian_Gauss!(out, ∇Tc, Tc, Tf, Tbf, k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,fc,ccenter,cv,floops::Face2CellLoop{NBF,NF,VT}) where {NBF,NF,VT}
-  fill!(out,zero(eltype(out)))
+  #fill!(out,zero(eltype(out)))
 
-  fillbvalues!(Tbf,bcond,Tc,bf2c,bt,bfc,bccenter,bfn,floops)
+  #fillbvalues!(Tbf,bcond,Tc,bf2c,bt,bfc,bccenter,bfn,floops)
 
   #Qf at bfaces
   @inbounds for i=1:NBF
@@ -87,9 +87,9 @@ floops)
 
 # Corrected Gauss Method
 function laplacian_CGauss!(out, ∇Tc, Tc, Tf::AbstractVector, Tbf, k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,fc,ccenter,cv,floops::Face2CellLoop{NBF,NF,VT}) where {NBF,NF,VT}
-  fill!(out,zero(eltype(out)))
+  #fill!(out,zero(eltype(out)))
 
-  fillbvalues!(Tbf,bcond,Tc,bf2c,bt,bfc,bccenter,bfn,floops)
+  #fillbvalues!(Tbf,bcond,Tc,bf2c,bt,bfc,bccenter,bfn,floops)
 
   #Qf at bfaces
   @inbounds for i=1:NBF
@@ -126,3 +126,31 @@ end
   floops.f2c,floops.fn,floops.fc,floops.ccenter,floops.cv,
 floops)
 
+abstract type AbstractLaplacian end
+
+struct CorrectedGauss{ArrayType} <: AbstractLaplacian
+  Tf::ArrayType
+end
+
+CorrectedGauss(Tc,mesh) = CorrectedGauss(FaceSimpleInterpolation(Tc,mesh))
+
+function (l::CorrectedGauss)(rhs,p)
+  laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.Tf, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
+end
+
+struct Gauss{ArrayType} <: AbstractLaplacian
+  Tf::ArrayType
+end
+
+Gauss(Tc,mesh) = Gauss(FaceSimpleInterpolation(Tc,mesh))
+
+function (l::Gauss)(rhs,p)
+  laplacian_Gauss!(rhs, p.∇Tc, p.Tc, l.Tf, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
+end
+
+struct MethodB <: AbstractLaplacian
+end
+
+function (l::MethodB)(rhs,p)
+  laplacian_mB!(rhs, p.Tc, p.k, p.bcond, p.mesh.f2cloops)
+end
