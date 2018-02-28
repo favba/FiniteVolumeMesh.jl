@@ -1,7 +1,7 @@
 __precompile__()
 module FiniteVolumeMesh
 
-export HomogeneousMesh, Vec, Vec2D, TriangleCell, read_input
+export HomogeneousMesh, Vec, Vec2D, TriangleCell, read_input, CellProblemAdvecTemp
 
 include("utils.jl")
 
@@ -22,10 +22,12 @@ include("cells.jl")
 include("faces.jl")
 include("boundaryconditions.jl")
 include("mesh.jl")
+include("advection.jl")
 include("input.jl")
 include("readneutral.jl")
 include("writevtk.jl")
 include("derivatives.jl")
 include("laplacian.jl")
+include("solvers.jl")
 
 end # module
