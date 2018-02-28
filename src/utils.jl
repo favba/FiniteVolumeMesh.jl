@@ -15,3 +15,5 @@ Base.:(==)(a::NTupleWrap,b::NTupleWrap) = a.ind == b.ind
 
 struct ConstVec{Val} end
 Base.getindex(a::ConstVec{Val},i) where {Val} = Val
+
+Base.norm(x::Real) = abs(x)
