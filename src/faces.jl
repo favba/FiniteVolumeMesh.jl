@@ -69,6 +69,8 @@ struct FaceSimpleInterpolation{T,NF} <: AbstractVector{T}
   f2c::Vector{Face2Cell}
 end
 
+FaceSimpleInterpolation(Tc,mesh) = FaceSimpleInterpolation{eltype(Tc),length(mesh.f2cloops.f2c)}(Tc,mesh.f2cloops.f2c)
+
 Base.size(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = (NF,)
 Base.length(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = NF
 Base.linearindices(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = Base.OneTo(NF)
