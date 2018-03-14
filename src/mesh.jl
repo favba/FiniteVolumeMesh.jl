@@ -11,6 +11,19 @@ struct HomogeneousMesh{VecType<:AbstractVec,CellType<:AbstractCell2Node,CNF,Face
   f2cloops::Face2CellLoop{NBF,NF,VecType}
 end
 
+vec_type(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = V
+cell_type(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = C
+cell_nnodes(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = CNF
+face_type(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = FT
+nbfaces(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = NBF
+nfaces(::Type{HomogeneousMesh{V,C,CNF,FT,NBF,NF}}) where {V,C,CNF,FT,NBF,NF} = NF
+
+for op in (:vec_type,:cell_type,:cell_nnodes,:face_type,:nbfaces,:nfaces)
+  @eval begin 
+    @inline ($op)(a::HomogeneousMesh) = ($op)(typeof(a))
+  end
+end
+
 function HomogeneousMesh(inputfile::AbstractString)
   nodes, cells, bc_cell, bfaces, bc_face = readneutral(inputfile)
   faces, c2f, bf2c, bfn, bfc, bcv, bccenter = cell_connectivity(cells,bfaces,bc_face,nodes)
