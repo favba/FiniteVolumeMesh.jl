@@ -64,6 +64,11 @@ struct Face2CellLoop{NBF,NF,VecType}
   ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
 end
 
+nbfaces(::Type{Face2CellLoop{NBF,NF,Vectype}}) where {NBF,NF,Vectype} = NBF
+@inline nbfaces(a::A) where A<:Face2CellLoop = nbfaces(A)
+nfaces(::Type{Face2CellLoop{NBF,NF,Vectype}}) where {NBF,NF,Vectype} = NF
+@inline nfaces(a::A) where A<:Face2CellLoop = nfaces(A)
+
 struct FaceSimpleInterpolation{T,NF} <: AbstractVector{T}
   Tc::Vector{T}
   f2c::Vector{Face2Cell}
@@ -71,12 +76,68 @@ end
 
 FaceSimpleInterpolation(Tc,mesh) = FaceSimpleInterpolation{eltype(Tc),length(mesh.f2cloops.f2c)}(Tc,mesh.f2cloops.f2c)
 
-Base.size(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = (NF,)
-Base.length(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = NF
-Base.linearindices(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = Base.OneTo(NF)
+Base.size(a::Type{FaceSimpleInterpolation{T,NF}}) where {T,NF} = (NF,)
+@inline Base.size(a::A) where {A<:FaceSimpleInterpolation} = size(A)
+Base.length(a::Type{FaceSimpleInterpolation{T,NF}}) where {T,NF} = NF
+@inline Base.length(a::A) where {A<:FaceSimpleInterpolation} = length(A)
+Base.linearindices(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = Base.OneTo(length(a))
 Base.IndexStyle(::Type{FaceSimpleInterpolation}) = IndexLinear()
 @inline Base.@propagate_inbounds function Base.getindex(a::FaceSimpleInterpolation,I)
   j1,j2 = a.f2c[I]
   Tc = a.Tc
   return 0.5*(Tc[j1]+Tc[j2])
+end
+
+struct FaceVector{T,NF,NBF,L} <: AbstractVector{T}
+  data::Vector{T}
+end
+
+Base.length(::Type{<:FaceVector{T,NF,NBF,L}}) where {T,NF,NBF,L} = L
+Base.size(::Type{<:FaceVector{T,NF,NBF,L}}) where {T,NF,NBF,L} = (L,)
+Base.linearindices(::Type{<:FaceVector{T,NF,NBF,L}}) where {T,NF,NBF,L} = Base.OneTo(L)
+Base.IndexStyle(::Type{<:FaceVector{T,NF,NBF,L}}) where {T,NF,NBF,L} = IndexLinear()
+Base.similar(a::FaceVector{T,NF,NBF,L}) where {T,NF,NBF,L} = FaceVector{T,NF,NBF,L}(zeros(T,L))
+
+for op in (:(Base.length),:(Base.size),:(Base.linearindices))
+  @eval begin
+    @inline function ($op)(a::FaceVector)
+      return ($op)(typeof(a)) 
+    end
+  end
+end
+
+@inline function Base.getindex(a::FaceVector,i::Integer)
+  d = a.data
+  @boundscheck checkbounds(a,i)
+  @inbounds r = d[i]
+  return r
+end
+
+@inline function Base.setindex!(a::FaceVector,x,i::Integer)
+  d = a.data
+  @boundscheck checkbounds(a,i)
+  @inbounds d[i] = x
+  return d
+end
+
+@inline @generated function Base.getindex(a::FaceVector{T,NF,NBF,L},s::Symbol,i1::Integer) where {T,NF,NBF,L}
+  n = NF
+  quote
+    d = a.data
+    i = i1 + $n
+    @boundscheck checkbounds(a,i)
+    @inbounds r = d[i]
+    return r
+  end
+end
+
+@inline @generated function Base.setindex!(a::FaceVector{T,NF,NBF,L},x,s::Symbol,i1::Integer) where {T,NF,NBF,L}
+  n = NF
+  quote
+    d = a.data
+    i = i1 + $n
+    @boundscheck checkbounds(a,i)
+    @inbounds d[i] = x
+    return d
+  end
 end
