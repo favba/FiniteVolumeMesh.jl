@@ -1,10 +1,12 @@
 abstract type BoundaryCondition end
 
 struct Neumman{Q} <: BoundaryCondition end
-flux(a::Neumman{Q}) where Q = Q
+flux(a::Type{Neumman{Q}}) where Q = Q
+@inline flux(a::A) where {A<:Neumman} = flux(A)
 
 struct Dirichlet{Val} <: BoundaryCondition end
-val(a::Dirichlet{Val}) where Val = Val
+val(a::Type{Dirichlet{Val}}) where Val = Val
+@inline val(a::A) where A<:Dirichlet = val(A)
 
 function flux_dirichlet(a::Dirichlet,bfc,bfn,k,bccenter,Tc)
   Tf = val(a)
