@@ -1,11 +1,13 @@
-function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,floop::Face2CellLoop{NBF,NF,VecType}) where {NBF,NF,VecType}
+function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,floop::Face2CellLoop)
   fill!(out,zero(eltype(out)))
+  NBF = nboundaryfaces(floop)
   @inbounds for i=1:NBF
     j = bf2c[i][1]
     flux = bfn[i] * f_at_bface[i] * bcv[i]
     out[j] += flux
   end  
 
+  NF = nfaces(floop)
   @inbounds for i=1:NF
     j1,j2 = f2c[i]
     flux = fn[i] * f_at_face[i] 
@@ -23,8 +25,9 @@ end
   return out
 end
 
-function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, floops::Face2CellLoop{NBF,NF,VecT}) where {NBF,NF,VecT}
+function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, floops::Face2CellLoop)
   fill!(out,zero(eltype(out)))
+  NBF = nboundaryfaces(floops)
   @inbounds for i=1:NBF
     el = bf2c[i]
     j = el[1]
@@ -33,6 +36,7 @@ function div!(out::Vector, f_at_face, f_at_bface, bf2c, bfn, bcv, f2c, fn, cv, f
     out[j] += flux
   end  
 
+  NF = nfaces(floops)
   @inbounds for i=1:NF
     el = f2c[i]
     j1 = el[1]

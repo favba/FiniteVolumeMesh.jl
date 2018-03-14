@@ -8,14 +8,16 @@ function bpart(btype::A,i::Integer,j::Integer,bfc,bfn,k,bccenter,cfield) where {
 end
 
 # Method B
-function laplacian_mB!(out,cfield,k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,ccenter,cv,floops::Face2CellLoop{NBF,NF,VT}) where {NBF,NF,VT}
+function laplacian_mB!(out,cfield,k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,ccenter,cv,floops::Face2CellLoop)
   #fill!(out,zero(eltype(out)))
+  NBF = nboundaryfaces(floops)
   @inbounds for i=1:NBF
     j = bf2c[i][1]
     qf = bpart(bcond[bt[i]],i,j,bfc,bfn,k,bccenter,cfield)
     out[j] += qf*bcv[i]
   end  
 
+  NF = nfaces(floops)
   @inbounds for i=1:NF
     el = f2c[i]
     j1 = el[1]

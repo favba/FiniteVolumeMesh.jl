@@ -3,12 +3,13 @@ abstract type AbstractAdvection end
 struct UpWind2ndOrder <: AbstractAdvection
 end
 
-function (a::UpWind2ndOrder)(rhs, ρC, buvec, uvec, Tc, Tbf, ∇Tc, bf2c, bfn, bcv, f2c, fn, cv, fc, ccenter, floops::Face2CellLoop{NBF,NF,VT}) where {NBF,NF,VT}
+function (a::UpWind2ndOrder)(rhs, ρC, buvec, uvec, Tc, Tbf, ∇Tc, bf2c, bfn, bcv, f2c, fn, cv, fc, ccenter, floops::Face2CellLoop)
+  NBF = nbfaces(floops)
   @inbounds for i=1:NBF
     j = bf2c[i][1]
     rhs[j] -= (ρC * Tbf[i] * (buvec[i] ⋅ bfn[i]))*bcv[i]
   end
-
+  NF = nfaces(floops)
   @inbounds for i=1:NF
     j1, j2 = f2c[i]
     n = fn[i]
