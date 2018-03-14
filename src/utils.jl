@@ -1,8 +1,10 @@
 abstract type NTupleWrap{N,T} end
 
 Base.@propagate_inbounds Base.getindex(a::NTupleWrap{N,T},i) where {N,T}= Base.getfield(a.ind,i)
-Base.eltype(a::NTupleWrap{N,T}) where {N,T} = T
-Base.length(a::NTupleWrap{N,T}) where {N,T} = N
+Base.eltype(a::Type{NTupleWrap{N,T}}) where {N,T} = T
+@inline Base.eltype(a::A) where {A<:NTupleWrap} = eltype(A)
+Base.length(a::Type{NTupleWrap{N,T}}) where {N,T} = N
+@inline Base.length(a::A) where {A<:NTupleWrap} = length(A)
 Base.size(t::NTupleWrap, d) = (d == 1) ? length(t) : throw(ArgumentError("invalid tuple dimension $d"))
 
 Base.start(t::NTupleWrap) =  1
@@ -16,5 +18,7 @@ Base.:(==)(a::NTupleWrap,b::NTupleWrap) = a.ind == b.ind
 struct ConstVec{Val} end
 Base.getindex(a::Type{ConstVec{Val}}) where {Val} = Val
 @inline Base.getindex(a::ConstVec{Val},i) where {Val} = getindex(typeof(a))
+Base.eltype(::Type{ConstVec{V}}) where V = typeof(V)
+@inline Base.eltype(a::ConstVec) = eltype(typeof(a))
 
 Base.norm(x::Real) = abs(x)
