@@ -1,9 +1,13 @@
 
-@inline nodetype(a::Union{<:AbstractCell2Node,Type{<:AbstractCell2Node}}) = Vec{Float64}
-@inline nnodes(a::Union{<:AbstractCell2Node{NN,NF},Type{<:AbstractCell2Node{NN,NF}}}) where {NN,NF} = NN
-@inline nfaces(a::Union{<:AbstractCell2Node{NN,NF},Type{<:AbstractCell2Node{NN,NF}}}) where {NN,NF} = NF
+nodetype(a::Type{<:AbstractCell2Node}) = Vec{Float64}
+@inline nodetype(a::A) where {A<:AbstractCell2Node} = nodetype(A)
+nnodes(a::Type{<:AbstractCell2Node{NN,NF}}) where {NN,NF} = NN
+@inline nnodes(a::A) where {A<:AbstractCell2Node} = nnodes(A)
+nfaces(a::Type{<:AbstractCell2Node{NN,NF}}) where {NN,NF} = NF
+@inline nfaces(a::A) where {A<:AbstractCell2Node} = nfaces(A)
 
-@inline nodetype(a::Union{<:AbstractCell2Node2D,<:AbstractCell2Node2D}) = Vec2D{Float64}
+nodetype(a::Type{<:AbstractCell2Node2D}) = Vec2D{Float64}
+@inline nodetype(a::A) where {A<:AbstractCell2Node2D} = nodetype(A)
 
 struct TriangleCell <: AbstractCell2Node2D{3,3}
   ind::Tuple{UInt,UInt,UInt}
