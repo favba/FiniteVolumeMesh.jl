@@ -1,7 +1,7 @@
 __precompile__()
 module FiniteVolumeMesh
 
-export HomogeneousMesh, Vec, Vec2D, TriangleCell, read_input, CellProblemAdvecTemp
+export HomogeneousMesh, Vec, Vec2D, TriangleCell, read_input, CellProblemAdvecTemp, PCG
 
 include("utils.jl")
 
@@ -16,12 +16,15 @@ const AbstractFace2Node2D = AbstractFace2Node{2}
 
 abstract type AbstractMesh end
 
+include("KrylovCtrl.jl")
+include("pcg.jl")
 include("vec.jl")
 include("geometry.jl")
 include("cells.jl")
 include("faces.jl")
 include("boundaryconditions.jl")
 include("mesh.jl")
+include("MatrixLike.jl")
 include("advection.jl")
 include("input.jl")
 include("readneutral.jl")

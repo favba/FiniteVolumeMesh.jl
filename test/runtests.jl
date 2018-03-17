@@ -27,3 +27,15 @@ end
   @test minimum(x->x≈Vec2D(1.,1.),∇T)
 
 end
+
+@testset "Preconditioned Conjugate Gradient Solver" begin
+  for N in (10,15,30,80,100)
+    A = Symmetric(rand(N,N))
+    x = rand(N)
+    b = A*x
+    r = zeros(N)
+    pcg = PCG(r)
+    FiniteVolumeMesh.solve!(pcg,A,r,b)
+    @test r ≈ x
+  end
+end

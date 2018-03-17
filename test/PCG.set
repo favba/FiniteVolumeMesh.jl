@@ -1,0 +1,7 @@
+verbosity: 1
+min_max_iter: 100 5000
+abstol: 1e-18
+reltol: 1e-18
+badtol: 200 10.
+kill_NaN: true
+
