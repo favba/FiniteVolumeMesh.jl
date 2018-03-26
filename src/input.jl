@@ -70,9 +70,9 @@ function show_parameters(d::Dict)
   return msg
 end
 
-const available_laplacians = ("Method-B","Method-Gauss","Corr-Gauss")
+const available_laplacians = ("Method-B","Method-Gauss","Corr-Gauss","Mimetic-Diff","Implicit-Diff")
 
-function get_laplacian_method(Tc,mesh,d)
+function get_laplacian_method(Tc,bcond,k,mesh,d)
   method = d[:gradtype]
   if method == "Method-B"
     return MethodB()
@@ -80,8 +80,30 @@ function get_laplacian_method(Tc,mesh,d)
     return Gauss(Tc,mesh)
   elseif method == "Corr-Gauss"
     return CorrectedGauss(Tc,mesh)
+  elseif method == "Mimetic-Diff" || method == "Mimetic_Diff"
+    return CellMimetic(k,bcond,mesh)
+  elseif method == "Implicit-Diff" || method == "Implicit_Diff"
+    return ImplicitDiff(k,bcond,mesh,d)
   else
     warn("Gradtype \"",method,"\" not implemented. Using \"Corr-Gauss\". Available options are: ",available_laplacians)
     return CorrectedGauss(Tc,mesh)
+  end
+end
+
+const available_advections = ("FullUpWind","UpWind2ndOrder")
+
+function get_advection_method(d)
+  if haskey(d,:advectype)
+    method = d[:advectype]
+    if method == "FullUpWind"
+      return FullUpWind()
+    elseif method == "UpWind2ndOrder"
+      return UpWind2ndOrder()
+    else
+      warn("Advectype \"",method,"\" not implemented. Using \"UpWind2ndOrder\". Available options are: ",available_advections)
+      return FullUpWind()
+    end
+  else
+    return UpWind2ndOrder()
   end
 end

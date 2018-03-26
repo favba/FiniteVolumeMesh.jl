@@ -10,7 +10,7 @@ end
 # Method B
 function laplacian_mB!(out,cfield,k,bf2c,bt,bcond,bfn,bfc,bccenter,bcv,f2c,fn,ccenter,cv,floops::Face2CellLoop)
   #fill!(out,zero(eltype(out)))
-  NBF = nboundaryfaces(floops)
+  NBF = nbfaces(floops)
   @inbounds for i=1:NBF
     j = bf2c[i][1]
     qf = bpart(bcond[bt[i]],i,j,bfc,bfn,k,bccenter,cfield)
@@ -155,4 +155,133 @@ end
 
 function (l::MethodB)(rhs,p)
   laplacian_mB!(rhs, p.Tc, p.k, p.bcond, p.mesh.f2cloops)
+end
+
+struct CellMimetic{M<:AbstractMatrixLike,P,ArrayT} <: AbstractLaplacian
+  A::M
+  pcg::P
+  b::ArrayT
+  x::ArrayT
+end
+
+function CellMimetic(k,bcond,m)
+  nbf = nbfaces(m)
+  nf = nfaces(m)
+  nt = nbf+nf
+  x = FaceVector{eltype(k),nf,nbf,nt}(zeros(eltype(k),nt))
+  b = similar(x)
+  pcg = PCG(x)
+  A = MimeticGrad(k,bcond,m)
+  return CellMimetic{typeof(A),typeof(pcg),typeof(b)}(A,pcg,b,x)
+end
+
+function (l::CellMimetic)(rhs,p)
+  set_x_and_b!(l,p,p.mesh.f2cloops)
+  solve!(l.pcg,l.A,l.x,l.b,true)
+  laplacian_mimetic!(rhs, l.x, p.bcond, p.Tc, p.∇Tc, l.A.rcf, l.A.brcf, p.k, p.mesh.f2cloops)
+end
+
+function set_x_and_b!(l,p,f2cl::Face2CellLoop)
+
+  nbf = nbfaces(f2cl)
+  nf = nfaces(f2cl)
+  Tbf = p.Tbf
+  Tc = p.Tc
+  b = l.b
+  x = l.x
+  bf2c = f2cl.bf2c
+
+  bcond = p.bcond
+  bfc = f2cl.bfc
+  bfn = f2cl.bfn
+  bccenter = f2cl.bccenter
+  k = p.k
+  bt = f2cl.bft
+  bcv = f2cl.bcv
+  @inbounds for i = 1:nbf
+    j = bf2c[i][1]
+    b[:b,i] = Tbf[i] - Tc[j]
+    x[:b,i] = bpart(bcond[bt[i]],i,j,bfc,bfn,k,bccenter,Tc)
+  end
+
+  f2c = f2cl.f2c
+
+  @inbounds for i = 1:nf
+    j1,j2 = f2c[i]
+    b[i] = Tc[j2] - Tc[j1]
+  end
+
+end
+
+
+# The gradient calculation is not right. It seems to be off by some multiplication factor.
+function laplacian_mimetic!(rhs,x,bcond,Tc,∇Tc,rcf,brcf,k,f2cl::Face2CellLoop)
+  nbf = nbfaces(f2cl)
+  nf = nfaces(f2cl)
+
+  bf2c = f2cl.bf2c
+
+  bt = f2cl.bft
+  bcv = f2cl.bcv
+  @inbounds for i=1:nbf
+    j = bf2c[i][1]
+    bch = bcond[bt[i]] 
+    if typeof(bch) <: Neumman
+      rhs[j] += flux(bch)*bcv[i]
+      ∇Tc[j] += flux(bch)*brcf[i]/k[i]
+    else
+      rhs[j] += x[:b,i]*bcv[i]
+      ∇Tc[j] += x[:b,i]*brcf[i]/k[i]
+    end
+  end  
+
+  f2c = f2cl.f2c
+  cv = f2cl.cv
+  @inbounds for i=1:nf
+    j1, j2 = f2c[i]
+    cv1,cv2 = cv[i]
+    qf = x[i]
+    rhs[j1] += qf*cv1
+    rhs[j2] -= qf*cv2
+
+    rc1,rc2 = rcf[i]
+    ∇Tc[j1] += qf*rc1/k[i]
+    ∇Tc[j2] -= qf*rc2/k[i]
+  end
+
+end
+
+@inline is_implicit(a::AbstractLaplacian) = false
+abstract type AbstractImplicitLaplacian <: AbstractLaplacian end
+@inline is_implicit(a::AbstractImplicitLaplacian) = true
+
+
+struct ImplicitDiff{M<:AbstractMatrixLike,P,T<:Number} <: AbstractImplicitLaplacian
+  A::M
+  pcg::P
+  b::Vector{T}
+end
+
+function ImplicitDiff(k,bcond,mesh,d)
+  dtrhoc = d[:dt]*d[Symbol("rho*C")]
+  A = ImplicitMethodB{typeof(mesh),typeof(bcond),typeof(k),typeof(dtrhoc)}(mesh,bcond,k,dtrhoc)
+  pcg = PCG(zeros(length(mesh.cells)))
+  b = zeros(eltype(k),length(mesh.cells))
+  return ImplicitDiff{typeof(A),typeof(pcg),eltype(k)}(A,pcg,b)
+end
+
+function (l::ImplicitDiff)(rhs,p)
+  set_x_and_b!(l,l.b,rhs,p)
+  solve!(l.pcg,l.A,rhs,l.b,true)
+  return nothing
+end
+
+function set_x_and_b!(l::ImplicitDiff,b,rhs,p)
+  A_mul_B!(b,l.A,p.Tc)
+  Tc = p.Tc
+  dtrhoc = l.A.dtrhoc
+  @inbounds @simd for i in linearindices(b)
+    b[i] = Tc[i] + dtrhoc*rhs[i] - b[i]
+  end
+  return nothing
 end
