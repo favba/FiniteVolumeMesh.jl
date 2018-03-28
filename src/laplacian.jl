@@ -231,7 +231,7 @@ function laplacian_mimetic!(rhs,x,bcond,Tc,∇Tc,rcf,brcf,k,f2cl::Face2CellLoop)
       ∇Tc[j] += flux(bch)*brcf[i]/k[i]
     else
       rhs[j] += x[:b,i]*bcv[i]
-      ∇Tc[j] += x[:b,i]*brcf[i]/k[i]
+      ∇Tc[j] += x[:b,i]*brcf[i]*bcv[i]/k[i]
     end
   end  
 
@@ -245,8 +245,8 @@ function laplacian_mimetic!(rhs,x,bcond,Tc,∇Tc,rcf,brcf,k,f2cl::Face2CellLoop)
     rhs[j2] -= qf*cv2
 
     rc1,rc2 = rcf[i]
-    ∇Tc[j1] += qf*rc1/k[i]
-    ∇Tc[j2] -= qf*rc2/k[i]
+    ∇Tc[j1] += qf*rc1*cv1/k[i]
+    ∇Tc[j2] -= qf*rc2*cv2/k[i]
   end
 
 end
