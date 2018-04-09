@@ -205,23 +205,11 @@ function evalT(A::ImplicitMethodB,out::AbstractArray{T},inp::AbstractArray{T}) w
   bcv = floops.bcv
 
   NBF = nbfaces(floops)
-   #@inbounds for i=1:NBF
-    #j = bf2c[i][1]
-    #bch = bcond[bt[i]] 
-    #if typeof(bch) <: Neumman
-      #rhs[j] += flux(bch)*bcv[i]
-    #else
-      #rhs[j] += x[:b,i]*bcv[i]
-    #end
-  #   j = bf2c[i][1]
-  #   qf = bpart(bcond[bt[i]],i,j,bfc,bfn,k,bccenter,inp)
-  #   out[j] += qf*bcv[i]
-  #end  
-   @inbounds for i=1:NBF
+  @inbounds for i=1:NBF
     j = bf2c[i][1]
     bch = bcond[bt[i]] 
     if typeof(bch) <: Neumman
-      qf = flux(bch)
+      qf = 0.0
     else
       AfoLac = (bfn[i]⋅bfn[i])/(bfn[i]⋅(bfc[i] - bccenter[i])) 
       qf = -k[j]*inp[j]*AfoLac
@@ -280,7 +268,7 @@ function evalP(A::ImplicitMethodB,out::AbstractArray{T},inp::AbstractArray{T}) w
     j = bf2c[i][1]
     bch = bcond[bt[i]] 
     if typeof(bch) <: Neumman
-      qf = flux(bch)
+      qf = 0.0
     else
       AfoLac = (bfn[i]⋅bfn[i])/(bfn[i]⋅(bfc[i] - bccenter[i])) 
       qf = -k[j]*AfoLac
