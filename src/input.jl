@@ -41,9 +41,18 @@ function read_input(filename::String)
     r = split(readline(f))
     d[Symbol(r[1])] = Vec2D(parse(Float64,r[2]), parse(Float64,r[3])) 
 
+    #read viscosity and density
+    for i=1:2
+      r = split(readline(f))
+      d[Symbol(r[1])] = parse(Float64,r[2])
+    end
+ 
     #skip blank line
     readline(f)
 
+    #read velocity
+    r = split(readline(f))
+    d[Symbol(r[1])] = parse(Bool,r[2])
     #read boundary conditions
     r = split(readline(f)) 
     r[1] == "BCs" || error("Error reading $filename file line 15. Expected parameter \"BCs\", got \"$(r[1])\" instead.")
@@ -51,8 +60,25 @@ function read_input(filename::String)
     bcs = ()
     for i=1:nbcs
       r = split(readline(f))
-      bc = Symbol(r[1])=>parse(Float64,r[2])
+      bc = Symbol(r[1])=>Vec2D(parse(Float64,r[2]), parse(Float64,r[3])) 
       bcs = (bcs...,bc)
+    end
+    d[:VBCs] = bcs
+    #skip blank line
+    readline(f)
+
+    #read temperature
+    r = split(readline(f))
+    d[Symbol(r[1])] = parse(Bool,r[2])
+    #read boundary conditions
+    r = split(readline(f)) 
+    r[1] == "BCs" || error("Error reading $filename file line 15. Expected parameter \"BCs\", got \"$(r[1])\" instead.")
+    nbcs = parse(UInt,r[2])
+    bcs2 = ()
+    for i=1:nbcs
+      r = split(readline(f))
+      bc2 = Symbol(r[1])=>parse(Float64,r[2])
+      bcs2 = (bcs...,bc2)
     end
     d[:BCs] = bcs
   end
