@@ -6,6 +6,7 @@ export HomogeneousMesh, Vec, Vec2D, TriangleCell, read_input, CellProblemAdvecTe
 include("utils.jl")
 
 abstract type AbstractVec{T} <: DenseArray{T,1} end
+abstract type AbstractTen{T} <: DenseArray{T,2} end
 
 abstract type AbstractCell2Node{NN,NF} <: NTupleWrap{NN,UInt} end
 abstract type AbstractCell2Node2D{NN,NF} <: AbstractCell2Node{NN,NF} end
@@ -19,6 +20,7 @@ abstract type AbstractMesh end
 include("KrylovCtrl.jl")
 include("pcg.jl")
 include("vec.jl")
+include("tensors.jl")
 include("geometry.jl")
 include("cells.jl")
 include("faces.jl")
