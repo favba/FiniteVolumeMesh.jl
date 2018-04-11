@@ -1,23 +1,22 @@
 using Base.RefValue
-struct PCG{T<:Real,A,CtrlType}
+struct PCG{A,CtrlType}
   ctrl::CtrlType
   pp::A
   zz::A
   ww::A
-  δ::RefValue{T}
-  α::RefValue{T}
-  β::RefValue{T}
-  η::RefValue{T}
-  ηm::RefValue{T}
-  err::RefValue{T}
+  δ::RefValue{Float64}
+  α::RefValue{Float64}
+  β::RefValue{Float64}
+  η::RefValue{Float64}
+  ηm::RefValue{Float64}
+  err::RefValue{Float64}
 end
 
 function PCG(xx,ictrl)
-  T = eltype(xx)
   pp = similar(xx)
   zz = similar(xx)
   ww = similar(xx)
-  return PCG{T,typeof(xx),typeof(ictrl)}(ictrl,pp,zz,ww,Ref(0.),Ref(0.),Ref(0.),Ref(0.),Ref(0.),Ref(0.))
+  return PCG{typeof(xx),typeof(ictrl)}(ictrl,pp,zz,ww,Ref(0.),Ref(0.),Ref(0.),Ref(0.),Ref(0.),Ref(0.))
 end
 
 function PCG(xx)
