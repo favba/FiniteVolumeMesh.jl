@@ -15,18 +15,11 @@ Base.:(==)(a::NTupleWrap,b) = a.ind == b
 Base.:(==)(b,a::NTupleWrap) = a.ind == b
 Base.:(==)(a::NTupleWrap,b::NTupleWrap) = a.ind == b.ind
 
-struct ConstVec{Val} end
-Base.getindex(a::Type{ConstVec{Val}}) where {Val} = Val
-@inline Base.getindex(a::ConstVec{Val},i) where {Val} = getindex(typeof(a))
-Base.eltype(::Type{ConstVec{V}}) where V = typeof(V)
-@inline Base.eltype(a::ConstVec) = eltype(typeof(a))
-
-struct ConstVecf{T} 
+struct ConstVec{T}
     x::T
 end
-@inline Base.getindex(a::ConstVecf,i) = a.x
-Base.eltype(::Type{ConstVecf{V}}) where V = V
-@inline Base.eltype(a::ConstVecf) = eltype(typeof(a))
-
+@inline Base.getindex(a::ConstVec{T},i) where {T} = a.x
+Base.eltype(::Type{ConstVec{V}}) where V = V
+@inline Base.eltype(a::ConstVec) = eltype(typeof(a))
 
 Base.norm(x::Real) = abs(x)
