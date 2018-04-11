@@ -66,8 +66,8 @@ struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa} 
     ru::Vector{Vec2D{Float64}}
     p::Vector{Float64}
     δp::Vector{Float64}
-    ν::ConstVecf{Float64}
-    ρ::ConstVecf{Float64}
+    ν::ConstVec{Float64}
+    ρ::ConstVec{Float64}
     bcond::uBcondType
     mesh::MeshType
     laplacian!::LaplacianStruct
@@ -83,8 +83,8 @@ function StokesProblem(u,mesh,d)
     ubf = FieldAtBoundary(u,mesh,bcond)
     δu = similar(u)
     ru = similar(u)
-    ν = ConstVecf(d[:conductivity])
-    ρ = ConstVecf(d[:density])
+    ν = ConstVec(d[:conductivity])
+    ρ = ConstVec(d[:density])
     ∇u = zeros(Ten2D{Float64},length(u))
     p = zeros(length(u))
     δp = zeros(length(u))
