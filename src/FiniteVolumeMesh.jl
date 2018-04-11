@@ -32,7 +32,7 @@ include("input.jl")
 include("readneutral.jl")
 include("writevtk.jl")
 include("derivatives.jl")
-include("laplacian.jl")
 include("solvers.jl")
+include("laplacian.jl")
 
 end # module
