@@ -63,7 +63,7 @@ function read_input(filename::String)
       bc = Symbol(r[1])=>Vec2D(parse(Float64,r[2]), parse(Float64,r[3])) 
       bcs = (bcs...,bc)
     end
-    d[:VBCs] = bcs
+    d[:uBCs] = bcs
     #skip blank line
     readline(f)
 
@@ -78,9 +78,9 @@ function read_input(filename::String)
     for i=1:nbcs
       r = split(readline(f))
       bc2 = Symbol(r[1])=>parse(Float64,r[2])
-      bcs2 = (bcs...,bc2)
+      bcs2 = (bcs2...,bc2)
     end
-    d[:BCs] = bcs
+    d[:BCs] = bcs2
   end
   return d
 end

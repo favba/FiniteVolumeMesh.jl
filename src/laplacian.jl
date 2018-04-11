@@ -131,13 +131,17 @@ floops)
 abstract type AbstractLaplacian end
 
 struct CorrectedGauss{ArrayType} <: AbstractLaplacian
-  Tf::ArrayType
+  ff::ArrayType
 end
 
 CorrectedGauss(Tc,mesh) = CorrectedGauss(FaceSimpleInterpolation(Tc,mesh))
 
-function (l::CorrectedGauss)(rhs,p)
-  laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.Tf, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
+function (l::CorrectedGauss)(rhs,p::CellProblemAdvecTemp)
+  laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
+end
+
+function (l::CorrectedGauss)(rhs,p::StokesProblem)
+  laplacian_CGauss!(rhs, p.∇u, p.u, l.ff, p.ubf, p.ν, p.bcond, p.mesh.f2cloops)
 end
 
 struct Gauss{ArrayType} <: AbstractLaplacian

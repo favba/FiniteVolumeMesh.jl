@@ -1,7 +1,7 @@
 abstract type AbstractProblem end
 
 struct CellProblemAdvecTemp{MeshType,TbfType,TypeK,TypeS,VType,BcondType,LaplacianStruct,AdvectionStruct} <: AbstractProblem
-    Tc::Array{Float64}
+    Tc::Vector{Float64}
     k::TypeK
     s::TypeS
     ρC::Float64
@@ -10,7 +10,7 @@ struct CellProblemAdvecTemp{MeshType,TbfType,TypeK,TypeS,VType,BcondType,Laplaci
     mesh::MeshType
     laplacian!::LaplacianStruct
     advection!::AdvectionStruct
-    ∇Tc::Array{Vec2D{Float64}}
+    ∇Tc::Vector{Vec2D{Float64}}
     Tbf::TbfType
 end
 
@@ -27,7 +27,7 @@ function CellProblemAdvecTemp(Tc,mesh,d)
     advection = get_advection_method(d)
     laplacian = get_laplacian_method(Tc,bcond,k,mesh,d)
     types = typeof.((mesh,Tbf,k,s,uvec,bcond,laplacian,advection))
-  return CellProblemAdvecTemp{types...}(Tc,k,s,ρC,uvec,bcond,mesh,laplacian,advection,∇Tc,Tbf)
+    return CellProblemAdvecTemp{types...}(Tc,k,s,ρC,uvec,bcond,mesh,laplacian,advection,∇Tc,Tbf)
 end
 
 @inline needs_gradient_calculation(p) = (typeof(p.advection!) === UpWind2ndOrder) && (typeof(p.laplacian!) === MethodB) && (typeof(p.u) <: ConstVec && p.u[1] == zero(eltype(p.u)))
@@ -56,4 +56,44 @@ function add_source!(rhs,p)
     @inbounds @simd for i=1:length(rhs)
         rhs[i] += s[i]
     end
+end
+
+struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa} <: AbstractProblem
+    u::Vector{Vec2D{Float64}}
+    uf::UfType
+    ubf::UbfType
+    δu::Vector{Vec2D{Float64}}
+    ru::Vector{Vec2D{Float64}}
+    p::Vector{Float64}
+    δp::Vector{Float64}
+    ν::ConstVecf{Float64}
+    ρ::ConstVecf{Float64}
+    bcond::uBcondType
+    mesh::MeshType
+    laplacian!::LaplacianStruct
+    ∇u::Vector{FiniteVolumeMesh.Ten2D{Float64}}
+    A::Ma
+    pcgA::PMa
+    s::Vector{Float64}
+end
+
+function StokesProblem(u,mesh,d)
+    uf = FaceSimpleInterpolation(u,mesh)
+    bcond = uboundary_conditions(d)
+    ubf = FieldAtBoundary(u,mesh,bcond)
+    δu = similar(u)
+    ru = similar(u)
+    ν = ConstVecf(d[:conductivity])
+    ρ = ConstVecf(d[:density])
+    ∇u = zeros(Ten2D{Float64},length(u))
+    p = zeros(length(u))
+    δp = zeros(length(u))
+
+    laplacian = get_laplacian_method(u,bcond,ν,mesh,d)
+    A = aIpDbG(d,mesh)
+    pcgA = PCG(δu)
+    types = typeof.((uf,ubf,mesh,bcond,laplacian,A,pcgA))
+
+    s = zeros(length(mesh.cells))
+    return StokesProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s)
 end

@@ -32,13 +32,13 @@ Base.:+(a::Ten2D{T},b::Ten2D{T2}) where {T,T2} =
 Base.:-(a::Ten2D{T},b::Ten2D{T2}) where {T,T2} = 
     Ten2D{promote_type(T,T2)}(a.xx-b.xx, a.yx-b.yx, a.xy-b.xy, a.yy-b.yy)
 
-Base.:*(a::T,b::Ten2D{T2}) where {T<:Number,T2} = 
+Base.:*(a::T,b::Ten2D{T2}) where {T<:Number,T2<:Number} = 
     Ten2D{promote_type(T,T2)}(a*b.xx, a*b.yx, a*b.xy, a*b.yy)
 
-Base.:*(b::Ten2D{T},a::T2) where {T<:Number,T2} = 
+Base.:*(b::Ten2D{T},a::T2) where {T<:Number,T2<:Number} = 
     Ten2D{promote_type(T,T2)}(a*b.xx, a*b.yx, a*b.xy, a*b.yy)
 
-Base.:/(b::Ten2D{T},a::T2) where {T<:Number,T2} = 
+Base.:/(b::Ten2D{T},a::T2) where {T<:Number,T2<:Number} = 
     Ten2D{promote_type(T,T2)}(b.xx/a, b.yx/a, b.xy/a, b.yy/a)
 
 Base.dot(a::Ten2D,b::Ten2D) = 

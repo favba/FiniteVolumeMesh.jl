@@ -16,13 +16,13 @@ function flux_dirichlet(a::Dirichlet,bfc,bfn,k,bccenter,Tc)
 end
 
 struct FieldAtBoundary{T,BcondType,VecType}
-  Tc::Array{T}
-  bf2c::Array{BFace2Cell}
-  bt::Array{UInt}
+  Tc::Vector{T}
+  bf2c::Vector{BFace2Cell}
+  bt::Vector{UInt}
   bcond::BcondType
-  bfc::Array{VecType}
-  bccenter::Array{VecType}
-  bfn::Array{VecType}
+  bfc::Vector{VecType}
+  bccenter::Vector{VecType}
+  bfn::Vector{VecType}
 end
 
 function FieldAtBoundary(Tc,mesh,bcond)
@@ -37,6 +37,20 @@ end
 
 function boundary_conditions(d::Dict)
   btypes = d[:BCs]
+  bcond = ()
+  for el in btypes
+    if el[1] == :value
+      b = Dirichlet{el[2]}()
+    elseif el[1] == :grad
+      b = Neumman{el[2]}()
+    end
+    bcond = (bcond...,b)
+  end
+  return bcond
+end
+
+function uboundary_conditions(d::Dict)
+  btypes = d[:uBCs]
   bcond = ()
   for el in btypes
     if el[1] == :value
