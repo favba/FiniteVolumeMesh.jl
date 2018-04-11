@@ -357,3 +357,170 @@ function Base.A_mul_B!(out::AbstractArray{T},A::ImplicitMethodB,inp::AbstractArr
   
   return nothing
 end
+
+# Solve for a * I() + ∇ ⋅ ( b * ∇())
+struct aIpDbG{MeshType,BType} <: AbstractMatrixLike # (aI() + Div(b*Grad()))()
+    m::MeshType
+    a::ConstVecf{Float64}
+    boundary_indeces::BType
+    bface_loop_value::Vector{Float64}
+    face_loop_value::Vector{Tuple{Float64,Float64}}
+    diag::Vector{Float64}
+end
+
+function aIpDbG(d,m)
+    a = ConstVecf(d[:density]/d[:dt])
+    boudary, bfl = set_boundary_things(d,m)
+    fl = set_face_loop(d,m)
+    diag = set_diag(d,m)
+    return aIpDbG{typeof(m),typeof(boudary)}(m,a,boudary,bfl,fl,diag)
+end
+
+function set_boundary_things(d,m)
+    floops = m.f2cloops
+    bf2c = floops.bf2c
+    bcond = uboundary_conditions(d)
+    bt = floops.bft 
+    bfc = floops.bfc 
+    bfn = floops.bfn
+    k = -0.5*d[:density]
+    bccenter = floops.bccenter
+    bcv = floops.bcv
+
+    bfl = Vector{Float64}()
+    boundary = ()
+    NBF = nbfaces(floops)
+
+    @inbounds for i=1:NBF
+        j = bf2c[i][1]
+        bch = bcond[bt[i]] 
+        if typeof(bch) <: Dirichlet
+            AfoLac = (bfn[i]⋅bfn[i])/(bfn[i]⋅(bfc[i] - bccenter[i])) 
+            push!(bfl,-k*bcv[i]*AfoLac)
+            boundary = (boundary..., j)
+        end
+    end  
+    return boundary, bfl
+end
+
+function set_face_loop(d,m)
+    floops = m.f2cloops
+    fn = floops.fn
+    f2c = floops.f2c
+    ccenter = floops.ccenter
+    k = -0.5*d[:density]
+    cv = floops.cv
+    NF = nfaces(floops)
+    fl = Vector{Tuple{Float64,Float64}}(NF)
+    @inbounds for i=1:NF
+        el = f2c[i]
+        j1 = el[1]
+        j2 = el[2]
+        n = fn[i] 
+        c = ccenter[i]
+        AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
+        qf = k*AfoLac
+    
+        v = cv[i]
+        fl[i] = (qf*v[1],qf*v[2])
+    end
+    return fl
+end
+
+function set_diag(d,m)
+    out = zeros(length(m.cells))
+
+    floops = m.f2cloops
+    bf2c = floops.bf2c
+    bcond = uboundary_conditions(d)
+    bt = floops.bft 
+    bfc = floops.bfc 
+    bfn = floops.bfn
+    k = -0.5*d[:density]
+    bccenter = floops.bccenter
+    bcv = floops.bcv
+  
+    NBF = nbfaces(floops)
+    @inbounds for i=1:NBF
+        j = bf2c[i][1]
+        bch = bcond[bt[i]] 
+        if typeof(bch) <: Neumman
+            qf = 0.0
+        else
+            AfoLac = (bfn[i]⋅bfn[i])/(bfn[i]⋅(bfc[i] - bccenter[i])) 
+            qf = -k*AfoLac
+        end
+        out[j] += qf*bcv[i]
+    end  
+
+    f2c = floops.f2c 
+    fn = floops.fn
+    ccenter = floops.ccenter
+    cv = floops.cv
+
+    NF = nfaces(floops)
+    @inbounds for i=1:NF
+        el = f2c[i]
+        j1 = el[1]
+        j2 = el[2]
+        n = fn[i] 
+        c = ccenter[i]
+        AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
+  
+        v = cv[i]
+        out[j1] -= k*AfoLac*v[1]
+        out[j2] -= k*AfoLac*v[2]
+    end  
+
+    a = d[:density]/d[:dt]
+    @inbounds for i in linearindices(out)
+        out[i] = 1/(a + out[i])
+    end
+    return out
+end
+
+function evalT(A::aIpDbG,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
+
+    fill!(out,zero(T))
+    #bface_loop_value = -b[j] * AfoLac[i] * bcv[i]
+    bface_loop_value = A.bface_loop_value
+    @inbounds for (i,j) in enumerate(A.boundary_indeces)
+        out[j] += inp[j]*bface_loop_value[i]   
+    end
+
+    floops = A.m.f2cloops    
+    f2c = floops.f2c
+    NF = nfaces(floops)
+    face_loop_value = A.face_loop_value
+    @inbounds for i=1:NF
+        el = f2c[i]
+        j1 = el[1]
+        j2 = el[2]
+        To = inp[j1]
+        Ta = inp[j2]
+        ΔT = Ta - To
+
+        f = face_loop_value[i] #face_loop_value = k[i]*AfoLac .* (cv[i])
+        out[j1] += ΔT*f[1]
+        out[j2] -= ΔT*f[2]
+    end  
+
+    δ = zero(Float64)
+    a = A.a
+    @inbounds for i in linearindices(out)
+        out[i] = a[i]*inp[i] + out[i]
+        δ += out[i]⋅inp[i]
+    end
+  
+    return δ
+end
+
+function evalP(A::aIpDbG,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
+    diag = A.diag
+    δ = zero(Float64)
+    @inbounds for i in linearindices(out)
+        out[i] = inp[i]*diag[i]
+        δ += out[i]⋅inp[i]
+    end
+    return δ
+end
