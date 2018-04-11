@@ -172,34 +172,37 @@ function CellMimetic(k,bcond,m)
   nbf = nbfaces(m)
   nf = nfaces(m)
   nt = nbf+nf
-  x = FaceVector{eltype(k),nf,nbf,nt}(zeros(eltype(k),nt))
+  x = FaceVector{eltype(bcond[1]),nf,nbf,nt}(zeros(eltype(bcond[1]),nt))
   b = similar(x)
   pcg = PCG(x)
   A = MimeticGrad(k,bcond,m)
   return CellMimetic{typeof(A),typeof(pcg),typeof(b)}(A,pcg,b,x)
 end
 
-function (l::CellMimetic)(rhs,p)
-  set_x_and_b!(l,p,p.mesh.f2cloops)
+function (l::CellMimetic)(rhs,p::CellProblemAdvecTemp)
+  set_x_and_b!(l,p,p.Tc,p.Tbf,p.bcond,p.k,p.mesh.f2cloops)
   solve!(l.pcg,l.A,l.x,l.b,true)
   laplacian_mimetic!(rhs, l.x, p.bcond, p.Tc, p.∇Tc, l.A.rcf, l.A.brcf, p.k, p.mesh.f2cloops)
 end
 
-function set_x_and_b!(l,p,f2cl::Face2CellLoop)
+function (l::CellMimetic)(rhs,p::StokesProblem)
+  set_x_and_b!(l,p,p.u,p.ubf,p.bcond,p.ν,p.mesh.f2cloops)
+  solve!(l.pcg,l.A,l.x,l.b,true)
+  laplacian_mimetic!(rhs, l.x, p.bcond, p.u, p.∇u, l.A.rcf, l.A.brcf, p.ν, p.mesh.f2cloops)
+end
+
+
+function set_x_and_b!(l,p,Tc,Tbf,bcond,k,f2cl::Face2CellLoop)
 
   nbf = nbfaces(f2cl)
   nf = nfaces(f2cl)
-  Tbf = p.Tbf
-  Tc = p.Tc
   b = l.b
   x = l.x
   bf2c = f2cl.bf2c
 
-  bcond = p.bcond
   bfc = f2cl.bfc
   bfn = f2cl.bfn
   bccenter = f2cl.bccenter
-  k = p.k
   bt = f2cl.bft
   bcv = f2cl.bcv
   @inbounds for i = 1:nbf

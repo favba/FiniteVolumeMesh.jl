@@ -1,7 +1,7 @@
 abstract type AbstractMatrixLike end
 
-struct MimeticGrad{T,VecType,BcondType,NBF,NF} <: AbstractMatrixLike
-  g::Vector{VecType} # cell stuff
+struct MimeticGrad{T,GradType,VecType,BcondType,NBF,NF} <: AbstractMatrixLike
+  g::Vector{GradType} # cell stuff
   brcf::Vector{VecType} # cell-to-face vector
   rcf::Vector{NTuple{2,VecType}} # cell-to-face vector
   bvkinv::Vector{T} # 1/(cell_volume*K)
@@ -13,10 +13,11 @@ end
 function MimeticGrad(k,bcond,m::HomogeneousMesh)
   T = eltype(k)
   vectype = vec_type(m)
+  gradtype = grad_type(bcond)
   f2cloop = m.f2cloops
-  g = zeros(vectype,length(m.cells))
+  g = zeros(gradtype,length(m.cells))
   brcf, rcf, bvkinv, vkinv = get_stuff_needed_for_MimeticGrad(k,m)
-  return MimeticGrad{T,vectype,typeof(bcond),nbfaces(m),nfaces(m)}(g,brcf,rcf,bvkinv,vkinv,bcond,f2cloop)
+  return MimeticGrad{T,gradtype,vectype,typeof(bcond),nbfaces(m),nfaces(m)}(g,brcf,rcf,bvkinv,vkinv,bcond,f2cloop)
 end
 
 function get_stuff_needed_for_MimeticGrad(k,m::HomogeneousMesh)
@@ -57,10 +58,10 @@ function get_stuff_needed_for_MimeticGrad(k,m::HomogeneousMesh)
   return brcf, rcf, bvkinv, vkinv
 end
 
-ibfaces(::Type{MimeticGrad{T,VecType,NC,NBF,NF}}) where {T,VecType,NC,NBF,NF} = Base.OneTo(NBF)
+ibfaces(::Type{MimeticGrad{T,GT,VecType,NC,NBF,NF}}) where {T,GT,VecType,NC,NBF,NF} = Base.OneTo(NBF)
 @inline ibfaces(a::MimeticGrad) = ibfaces(typeof(a))
 
-ifaces(::Type{MimeticGrad{T,VecType,NC,NBF,NF}}) where {T,VecType,NC,NBF,NF} = Base.OneTo(NF)
+ifaces(::Type{MimeticGrad{T,GT,VecType,NC,NBF,NF}}) where {T,GT,VecType,NC,NBF,NF} = Base.OneTo(NF)
 @inline ifaces(a::MimeticGrad) = ifaces(typeof(a))
 
 function evalT(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
@@ -91,7 +92,7 @@ function evalT(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
     g[j2] -= inp[i]*rc2*v2
   end
  
-  δ = zero(T)
+  δ = zero(Float64)
   @inbounds for i in ibfaces(A)
     j = bf2c[i][1]
     if typeof(bcond[bt[i]]) <: Neumman
@@ -99,14 +100,14 @@ function evalT(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
     else
       out[:b,i] = g[j] ⋅ brcf[i]
     end
-    δ += inp[:b,i]*out[:b,i]
+    δ += inp[:b,i] ⋅ out[:b,i]
   end
 
   @inbounds for i in ifaces(A)
     j1,j2 = f2c[i]
     rc1,rc2 = rcf[i]
     out[i] = (g[j1] ⋅ rc1) - (g[j2] ⋅ rc2)
-    δ += inp[i]*out[i]
+    δ += inp[i] ⋅ out[i]
   end
 
   return δ
@@ -118,7 +119,7 @@ function evalP(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
   bcond = A.bcond
   bt = A.f2cloop.bft
 
-  δ = zero(T)
+  δ = zero(Float64)
   @inbounds for i in ibfaces(A)
     if typeof(bcond[bt[i]]) <: Neumman
       out[:b,i] = zero(T)
@@ -126,7 +127,7 @@ function evalP(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
     else
       out[:b,i] = inp[:b,i]/((brcf[i]⋅brcf[i])*bvkinv[i])
     end
-    δ += out[:b,i] * inp[:b,i]
+    δ += out[:b,i] ⋅  inp[:b,i]
   end
   
   rcf = A.rcf
@@ -135,7 +136,7 @@ function evalP(A::MimeticGrad,out::FaceVector{T},inp::FaceVector{T}) where {T}
     rc1,rc2 = rcf[i]
     v1,v2 = vkinv[i]
     out[i] = inp[i]/((rc1⋅rc1)*v1 + (rc2⋅rc2)*v2)
-    δ += out[i] * inp[i]
+    δ += out[i] ⋅ inp[i]
   end
  
   return δ
@@ -361,7 +362,7 @@ end
 # Solve for a * I() + ∇ ⋅ ( b * ∇())
 struct aIpDbG{MeshType,BType} <: AbstractMatrixLike # (aI() + Div(b*Grad()))()
     m::MeshType
-    a::ConstVecf{Float64}
+    a::ConstVec{Float64}
     boundary_indeces::BType
     bface_loop_value::Vector{Float64}
     face_loop_value::Vector{Tuple{Float64,Float64}}
@@ -369,7 +370,7 @@ struct aIpDbG{MeshType,BType} <: AbstractMatrixLike # (aI() + Div(b*Grad()))()
 end
 
 function aIpDbG(d,m)
-    a = ConstVecf(d[:density]/d[:dt])
+    a = ConstVec(d[:density]/d[:dt])
     boudary, bfl = set_boundary_things(d,m)
     fl = set_face_loop(d,m)
     diag = set_diag(d,m)
