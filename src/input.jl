@@ -96,7 +96,7 @@ function show_parameters(d::Dict)
   return msg
 end
 
-const available_laplacians = ("Method-B","Method-Gauss","Corr-Gauss","Mimetic-Diff","Implicit-Diff")
+const available_laplacians = ("Method-B","Method-Gauss","Corr-Gauss","Mimetic-Cell","Implicit-B")
 
 function get_laplacian_method(Tc,bcond,k,mesh,d)
   method = d[:gradtype]
@@ -106,9 +106,9 @@ function get_laplacian_method(Tc,bcond,k,mesh,d)
     return Gauss(Tc,mesh)
   elseif method == "Corr-Gauss"
     return CorrectedGauss(Tc,mesh)
-  elseif method == "Mimetic-Diff" || method == "Mimetic_Diff"
+  elseif method == "Mimetic-Cell" || method == "Mimetic_Cell"
     return CellMimetic(k,bcond,mesh)
-  elseif method == "Implicit-Diff" || method == "Implicit_Diff"
+  elseif method == "Implicit-B" || method == "Implicit_B"
     return ImplicitDiff(k,bcond,mesh,d)
   else
     warn("Gradtype \"",method,"\" not implemented. Using \"Corr-Gauss\". Available options are: ",available_laplacians)
