@@ -531,13 +531,15 @@ struct PoissonP{MeshType} <: AbstractMatrixLike # (Div(b*Grad()))()
   face_loop_value::Vector{Tuple{Float64,Float64}}
   diag::Vector{Float64}
   k::ConstVec{Float64}
+  g::Vector{Vec2D{Float64}}
 end
 
 function PoissonP(d,m)
   fl = set_face_loop_poisson(d,m)
   diag = set_diag_poisson(d,m)
   k = ConstVec(d[:dt]/d[:density])
-  return PoissonP{typeof(m)}(m,fl,diag,k)
+  g = Vector{Vec2D{Float64}}(length(m.cells))
+  return PoissonP{typeof(m)}(m,fl,diag,k,g)
 end
 
 function set_face_loop_poisson(d,m)
@@ -601,49 +603,51 @@ function set_diag_poisson(d,m)
   return out
 end
 
+function pressure_gradient!(out::Vector, f, f2c,fn,cv,bf2c,bfn,bcv,floop::FiniteVolumeMesh.Face2CellLoop)
+
+  fill!(out,zero(eltype(out)))
+  NBF = FiniteVolumeMesh.nbfaces(floop)
+  @inbounds for i=1:NBF
+      j = bf2c[i][1]
+      flux = bfn[i] * f[j] * bcv[i]
+      out[j] += flux
+  end  
+
+  NF = FiniteVolumeMesh.nfaces(floop)
+
+  @inbounds for i=1:NF
+      j1,j2 = f2c[i]
+      flux = fn[i] * ((f[j1] + f[j2])*0.5)
+      v = cv[i]
+      out[j1] += flux*v[1]
+      out[j2] -= flux*v[2]
+  end  
+end
+
+@inline pressure_gradient!(out, f, floop) = pressure_gradient!(out, f, floop.f2c,floop.fn,floop.cv,floop.bf2c,floop.bfn,floop.bcv,floop)
+
+function pressure_div!(out::Vector, f, a,f2c,fn,cv,bf2c,bfn,bcv,floop::FiniteVolumeMesh.Face2CellLoop)
+
+  fill!(out,zero(eltype(out)))
+  NF = FiniteVolumeMesh.nfaces(floop)
+
+  @inbounds for i=1:NF
+      j1,j2 = f2c[i]
+      flux = a * (fn[i] ⋅ ((f[j1] + f[j2])*0.5))
+      v = cv[i]
+      out[j1] += flux*v[1]
+      out[j2] -= flux*v[2]
+  end  
+end
+
+@inline pressure_div!(out, f, a,floop) = pressure_div!(out, f, a,floop.f2c,floop.fn,floop.cv,floop.bf2c,floop.bfn,floop.bcv,floop)
+
 function evalT(A::PoissonP,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
 
   fill!(out,zero(T))
-
-  floops = A.m.f2cloops    
-  f2c = floops.f2c
-  NF = nfaces(floops)
-  face_loop_value = A.face_loop_value
-  @inbounds for i=1:NF
-      el = f2c[i]
-      j1 = el[1]
-      j2 = el[2]
-      To = inp[j1]
-      Ta = inp[j2]
-      ΔT = Ta - To
-
-      f = face_loop_value[i] #face_loop_value = k[i]*AfoLac .* (cv[i])
-      out[j1] += ΔT*f[1]
-      out[j2] -= ΔT*f[2]
-  end  
-
-  # f2c = floops.f2c 
-  # fn = floops.fn
-  # ccenter = floops.ccenter
-  # cv = floops.cv
-  # k = A.k
-
-  # NF = nfaces(floops)
-  # @inbounds for i=1:NF
-  #   el = f2c[i]
-  #   j1 = el[1]
-  #   j2 = el[2]
-  #   To = inp[j1]
-  #   Ta = inp[j2]
-  #   n = fn[i] 
-  #   c = ccenter[i]
-  #   AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
-  #   qf = k[i]*(Ta-To)*AfoLac
-  
-  #   v = cv[i]
-  #   out[j1] += qf*v[1]
-  #   out[j2] -= qf*v[2]
-  # end  
+  g = A.g
+  pressure_gradient!(g,inp,A.m.f2cloops) 
+  pressure_div!(out,g,A.k[1],A.m.f2cloops)
 
   δ = zero(Float64)
   @inbounds for i in linearindices(out)
