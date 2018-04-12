@@ -363,7 +363,7 @@ end
 struct aIpDbG{MeshType,BType} <: AbstractMatrixLike # (aI() + Div(b*Grad()))()
     m::MeshType
     a::ConstVec{Float64}
-    boundary_indeces::BType
+    boundary_indices::BType
     bface_loop_value::Vector{Float64}
     face_loop_value::Vector{Tuple{Float64,Float64}}
     diag::Vector{Float64}
@@ -384,7 +384,7 @@ function set_boundary_things(d,m)
     bt = floops.bft 
     bfc = floops.bfc 
     bfn = floops.bfn
-    k = -0.5*d[:density]
+    k = -0.5*d[:viscosity]
     bccenter = floops.bccenter
     bcv = floops.bcv
 
@@ -409,7 +409,7 @@ function set_face_loop(d,m)
     fn = floops.fn
     f2c = floops.f2c
     ccenter = floops.ccenter
-    k = -0.5*d[:density]
+    k = -0.5*d[:viscosity]
     cv = floops.cv
     NF = nfaces(floops)
     fl = Vector{Tuple{Float64,Float64}}(NF)
@@ -437,7 +437,7 @@ function set_diag(d,m)
     bt = floops.bft 
     bfc = floops.bfc 
     bfn = floops.bfn
-    k = -0.5*d[:density]
+    k = -0.5*d[:viscosity]
     bccenter = floops.bccenter
     bcv = floops.bcv
   
@@ -485,7 +485,7 @@ function evalT(A::aIpDbG,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
     fill!(out,zero(T))
     #bface_loop_value = -b[j] * AfoLac[i] * bcv[i]
     bface_loop_value = A.bface_loop_value
-    @inbounds for (i,j) in enumerate(A.boundary_indeces)
+    @inbounds for (i,j) in enumerate(A.boundary_indices)
         out[j] += inp[j]*bface_loop_value[i]   
     end
 
@@ -502,8 +502,8 @@ function evalT(A::aIpDbG,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
         ΔT = Ta - To
 
         f = face_loop_value[i] #face_loop_value = k[i]*AfoLac .* (cv[i])
-        out[j1] += ΔT*f[1]
-        out[j2] -= ΔT*f[2]
+        out[j1] += f[1]*ΔT
+        out[j2] -= f[2]*ΔT
     end  
 
     δ = zero(Float64)
@@ -524,4 +524,141 @@ function evalP(A::aIpDbG,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
         δ += out[i]⋅inp[i]
     end
     return δ
+end
+
+struct PoissonP{MeshType} <: AbstractMatrixLike # (Div(b*Grad()))()
+  m::MeshType
+  face_loop_value::Vector{Tuple{Float64,Float64}}
+  diag::Vector{Float64}
+  k::ConstVec{Float64}
+end
+
+function PoissonP(d,m)
+  fl = set_face_loop_poisson(d,m)
+  diag = set_diag_poisson(d,m)
+  k = ConstVec(d[:dt]/d[:density])
+  return PoissonP{typeof(m)}(m,fl,diag,k)
+end
+
+function set_face_loop_poisson(d,m)
+  floops = m.f2cloops
+  fn = floops.fn
+  f2c = floops.f2c
+  ccenter = floops.ccenter
+  k = d[:dt]/d[:density]
+  cv = floops.cv
+  NF = nfaces(floops)
+  fl = Vector{Tuple{Float64,Float64}}(NF)
+  @inbounds for i=1:NF
+      el = f2c[i]
+      j1 = el[1]
+      j2 = el[2]
+      n = fn[i] 
+      c = ccenter[i]
+      AfoLac = abs((n⋅n)/(n⋅(c[2] - c[1])))
+      qf = k*AfoLac
+  
+      v = cv[i]
+      fl[i] = (qf*v[1],qf*v[2])
+  end
+  return fl
+end
+
+function set_diag_poisson(d,m)
+  out = zeros(length(m.cells))
+
+  floops = m.f2cloops
+  bf2c = floops.bf2c
+  bt = floops.bft 
+  bfc = floops.bfc 
+  bfn = floops.bfn
+  k = d[:dt]/d[:density]
+  bccenter = floops.bccenter
+  bcv = floops.bcv
+
+  f2c = floops.f2c 
+  fn = floops.fn
+  ccenter = floops.ccenter
+  cv = floops.cv
+
+  NF = nfaces(floops)
+  @inbounds for i=1:NF
+      el = f2c[i]
+      j1 = el[1]
+      j2 = el[2]
+      n = fn[i] 
+      c = ccenter[i]
+      AfoLac = abs((n⋅n)/(n⋅(c[2] - c[1])))
+
+      v = cv[i]
+      out[j1] -= k*AfoLac*v[1]
+      out[j2] -= k*AfoLac*v[2]
+  end  
+
+  @inbounds for i in linearindices(out)
+      out[i] = 1/out[i]
+  end
+  return out
+end
+
+function evalT(A::PoissonP,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
+
+  fill!(out,zero(T))
+
+  floops = A.m.f2cloops    
+  f2c = floops.f2c
+  NF = nfaces(floops)
+  face_loop_value = A.face_loop_value
+  @inbounds for i=1:NF
+      el = f2c[i]
+      j1 = el[1]
+      j2 = el[2]
+      To = inp[j1]
+      Ta = inp[j2]
+      ΔT = Ta - To
+
+      f = face_loop_value[i] #face_loop_value = k[i]*AfoLac .* (cv[i])
+      out[j1] += ΔT*f[1]
+      out[j2] -= ΔT*f[2]
+  end  
+
+  # f2c = floops.f2c 
+  # fn = floops.fn
+  # ccenter = floops.ccenter
+  # cv = floops.cv
+  # k = A.k
+
+  # NF = nfaces(floops)
+  # @inbounds for i=1:NF
+  #   el = f2c[i]
+  #   j1 = el[1]
+  #   j2 = el[2]
+  #   To = inp[j1]
+  #   Ta = inp[j2]
+  #   n = fn[i] 
+  #   c = ccenter[i]
+  #   AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
+  #   qf = k[i]*(Ta-To)*AfoLac
+  
+  #   v = cv[i]
+  #   out[j1] += qf*v[1]
+  #   out[j2] -= qf*v[2]
+  # end  
+
+  δ = zero(Float64)
+  @inbounds for i in linearindices(out)
+      δ += out[i]⋅inp[i]
+  end
+
+  return δ
+end
+
+function evalP(A::PoissonP,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
+  diag = A.diag
+  δ = zero(Float64)
+  @inbounds for i in linearindices(out)
+      out[i] = inp[i]#*diag[i]
+      δ += out[i]⋅inp[i]
+  end
+  return δ
 end

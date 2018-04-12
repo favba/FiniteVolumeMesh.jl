@@ -58,7 +58,7 @@ function add_source!(rhs,p)
     end
 end
 
-struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa} <: AbstractProblem
+struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa,PMap} <: AbstractProblem
     u::Vector{Vec2D{Float64}}
     uf::UfType
     ubf::UbfType
@@ -75,6 +75,9 @@ struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa} 
     A::Ma
     pcgA::PMa
     s::Vector{Float64}
+    Ap::PoissonP{MeshType}
+    pcgAp::PMap
+    dt::Float64
 end
 
 function StokesProblem(u,mesh,d)
@@ -92,8 +95,11 @@ function StokesProblem(u,mesh,d)
     laplacian = get_laplacian_method(u,bcond,ν,mesh,d)
     A = aIpDbG(d,mesh)
     pcgA = PCG(δu)
-    types = typeof.((uf,ubf,mesh,bcond,laplacian,A,pcgA))
+    pcgAp = PCG(δp)
+    types = typeof.((uf,ubf,mesh,bcond,laplacian,A,pcgA,pcgAp))
 
     s = zeros(length(mesh.cells))
-    return StokesProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s)
+    Ap = PoissonP(d,mesh)
+    dt = d[:dt]
+    return StokesProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s,Ap,pcgAp,dt)
 end
