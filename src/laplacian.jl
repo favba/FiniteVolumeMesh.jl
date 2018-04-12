@@ -157,8 +157,12 @@ end
 struct MethodB <: AbstractLaplacian
 end
 
-function (l::MethodB)(rhs,p)
+function (l::MethodB)(rhs,p::CellProblemAdvecTemp)
   laplacian_mB!(rhs, p.Tc, p.k, p.bcond, p.mesh.f2cloops)
+end
+
+function (l::MethodB)(rhs,p::StokesProblem)
+  laplacian_mB!(rhs, p.u, p.ν, p.bcond, p.mesh.f2cloops)
 end
 
 struct CellMimetic{M<:AbstractMatrixLike,P,ArrayT} <: AbstractLaplacian
