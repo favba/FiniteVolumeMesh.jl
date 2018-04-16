@@ -6,7 +6,8 @@ function readneutral(inputfile::AbstractString)
     open(inputfile) do input
 
         NN = parse(Int,readline(input))
-        nodes = Vector{Vec2D{Float64}}(NN) #Pre-allocation a vector of Vec2D{Float64} with NN elemetns
+        #nodes = Vector{Vec2D{Float64}}(NN) #Pre-allocation a vector of Vec2D{Float64} with NN elemetns
+        nodes = Vec2DArray{Float64}(NN) #Pre-allocation a vector of Vec2D{Float64} with NN elemetns
     
         for i=1:NN
             nodes[i] = Vec2D(string_to_numbers(Float64,readline(input))...)

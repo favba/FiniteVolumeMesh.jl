@@ -1,40 +1,33 @@
-abstract type AbstractVecArray{T<:AbstractVec,L,N} <: AbstractArray{T,N} end
+abstract type AbstractVecArray{T<:AbstractVec,N} <: AbstractArray{T,N} end
 
 @inline Base.size(u::AbstractVecArray) =
     size(u.x)
 
-@inline Base.length(::Type{<:AbstractVecArray{T,L,N}}) where {T,L,N} =
-    L
-
 @inline Base.length(u::AbstractVecArray) =
-    length(typeof(u))
-
-@inline Base.linearindices(::Type{<:AbstractVecArray{T,L,N}}) where {T,L,N} =
-    Base.OneTo(L)
+    length(u.x)
 
 @inline Base.linearindices(u::AbstractVecArray) =
-    linearindices(typeof(u))
+    linearindices(u.x)
 
 Base.IndexStyle(u::AbstractVecArray) =
     IndexLinear()
 
-struct VecArray{T<:Number,L,N} <: AbstractVecArray{Vec{T},L,N}
+struct VecArray{T<:Number,N} <: AbstractVecArray{Vec{T},N}
     x::Array{T,N}
     y::Array{T,N}
     z::Array{T,N}
 
-    function VecArray{T,L,N}(x,y,z) where {T,L,N}
-        ((length(x) == L && length(y) == L && length(z) == L) && 
-            (size(x) == size(y) == size(z))) || throw(ArgumentError("Arrays must have the same dimensions"))
-        return new{T,L,N}(x,y,z)
+    function VecArray{T,N}(x,y,z) where {T,N}
+        (size(x) == size(y) == size(z)) || throw(ArgumentError("Arrays must have the same dimensions"))
+        return new{T,N}(x,y,z)
     end
 
 end
 
 VecArray(x,y,z) =
-    VecArray{eltype(x),length(x),ndims(x)}(x,y,z)
+    VecArray{eltype(x),ndims(x)}(x,y,z)
 
-@inline function Base.getindex(u::VecArray{T,L,N},I) where {T,L,N}
+@inline function Base.getindex(u::VecArray{T,N},I) where {T,N}
     x = u.x
     y = u.y
     z = u.z
@@ -47,7 +40,7 @@ VecArray(x,y,z) =
     return Vec{T}(xv,yv,zv)
 end
 
-@inline function Base.setindex!(u::VecArray{T,L,N},v::Vec,I) where {T,L,N}
+@inline function Base.setindex!(u::VecArray{T,N},v::Vec,I) where {T,N}
     x = u.x
     y = u.y
     z = u.z
@@ -60,22 +53,23 @@ end
     return u
 end
 
-struct Vec2DArray{T<:Number,L,N} <: AbstractVecArray{Vec2D{T},L,N}
+struct Vec2DArray{T<:Number,N} <: AbstractVecArray{Vec2D{T},N}
     x::Array{T,N}
     y::Array{T,N}
 
-    function Vec2DArray{T,L,N}(x,y) where {T,L,N}
-        ((length(x) == L && length(y) == L) && 
-            (size(x) == size(y))) || throw(ArgumentError("Arrays must have the same dimensions"))
-        return new{T,L,N}(x,y)
+    function Vec2DArray{T,N}(x,y) where {T,N}
+        (size(x) == size(y)) || throw(ArgumentError("Arrays must have the same dimensions"))
+        return new{T,N}(x,y)
     end
 
 end
 
-Vec2DArray(x,y) =
-    Vec2DArray{eltype(x),length(x),ndims(x)}(x,y)
+Vec2DArray(x::AbstractArray,y) =
+    Vec2DArray{eltype(x),ndims(x)}(x,y)
 
-@inline function Base.getindex(u::Vec2DArray{T,L,N},I) where {T,L,N}
+Vec2DArray{T}(L::Integer) where T = Vec2DArray{T,1}(Array{T}(L),Array{T}(L))
+
+@inline function Base.getindex(u::Vec2DArray{T,N},I) where {T,N}
     x = u.x
     y = u.y
     @boundscheck checkbounds(x,I)
@@ -86,7 +80,7 @@ Vec2DArray(x,y) =
     return Vec2D{T}(xv,yv)
 end
 
-@inline function Base.setindex!(u::Vec2DArray{T,L,N},v::Vec2D,I) where {T,L,N}
+@inline function Base.setindex!(u::Vec2DArray{T,N},v::Vec2D,I) where {T,N}
     x = u.x
     y = u.y
     @boundscheck checkbounds(x,I)
@@ -97,20 +91,19 @@ end
     return u
 end
 
-struct Vec1DArray{T<:Number,L,N} <: AbstractVecArray{Vec1D{T},L,N}
+struct Vec1DArray{T<:Number,N} <: AbstractVecArray{Vec1D{T},N}
     x::Array{T,N}
 
-    function Vec1DArray{T,L,N}(x) where {T,L,N}
-        length(x) == L || throw(ArgumentError("Wrong lentght"))
-        return new{T,L,N}(x)
+    function Vec1DArray{T,N}(x) where {T,N}
+        return new{T,N}(x)
     end
 
 end
 
-Vec1DArray(x) =
-    Vec1DArray{eltype(x),length(x),ndims(x)}(x)
+Vec1DArray(x::AbstractArray) =
+    Vec1DArray{eltype(x),ndims(x)}(x)
 
-@inline function Base.getindex(u::Vec1DArray{T,L,N},I) where {T,L,N}
+@inline function Base.getindex(u::Vec1DArray{T,N},I) where {T,N}
     x = u.x
     @boundscheck checkbounds(x,I)
     @inbounds begin
@@ -119,7 +112,7 @@ Vec1DArray(x) =
     return Vec1D{T}(xv)
 end
 
-@inline function Base.setindex!(u::Vec1DArray{T,L,N},v::Vec1D,I) where {T,L,N}
+@inline function Base.setindex!(u::Vec1DArray{T,N},v::Vec1D,I) where {T,N}
     x = u.x
     @boundscheck checkbounds(x,I)
     @inbounds begin

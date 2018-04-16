@@ -1,6 +1,6 @@
 
-struct HomogeneousMesh{VecType<:AbstractVec,CellType<:AbstractCell2Node,CNF,FaceType<:AbstractFace2Node,NBF,NF} <: AbstractMesh
-    nodes::Vector{VecType}
+struct HomogeneousMesh{VecArrayType,VecType<:AbstractVec,CellType<:AbstractCell2Node,CNF,FaceType<:AbstractFace2Node,NBF,NF} <: AbstractMesh
+    nodes::VecArrayType
     cells::Vector{CellType} # c2n
     faces::Vector{FaceType} # f2n
     bfaces::Vector{FaceType} # bf2n
@@ -30,8 +30,8 @@ function HomogeneousMesh(inputfile::AbstractString)
     f2c, fn, fc, cv, ccenter = face_connectivity(faces,c2f,cells,nodes)
     CellType = eltype(cells)
     CNF = nfaces(CellType)
-    f2cloops = Face2CellLoop{length(bfaces),length(faces),eltype(nodes)}(bf2c,bc_face,bfn,bfc,bcv,bccenter,f2c,fn,fc,cv,ccenter)
-    return HomogeneousMesh{eltype(nodes),CellType,CNF,eltype(faces),length(bfaces),length(faces)}(nodes,cells,faces,bfaces,c2f,f2cloops)
+    f2cloops = Face2CellLoop{length(bfaces),length(faces),eltype(nodes),typeof(fn)}(bf2c,bc_face,bfn,bfc,bcv,bccenter,f2c,fn,fc,cv,ccenter)
+    return HomogeneousMesh{typeof(nodes),eltype(nodes),CellType,CNF,eltype(faces),length(bfaces),length(faces)}(nodes,cells,faces,bfaces,c2f,f2cloops)
 end
 
 HomogeneousMesh(d::Dict) = HomogeneousMesh(d[:meshfilename])
@@ -43,9 +43,9 @@ function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
     faces = Vector{Face2Node{2}}(0)
     c2f = Vector{Tuple{Int,Int,Int}}(NC)
     bf2c = Vector{BFace2Cell}(NBF)
-    bfn = Vector{Vec2D{Float64}}(NBF)
-    bfc = Vector{Vec2D{Float64}}(NBF)
-    bccenter = Vector{Vec2D{Float64}}(NBF)
+    bfn = Vec2DArray{Float64}(NBF)
+    bfc = Vec2DArray{Float64}(NBF)
+    bccenter = Vec2DArray{Float64}(NBF)
     bcv = Vector{Float64}(NBF)
   
     nnbc = 0
@@ -64,7 +64,7 @@ function cell_connectivity(cells::Vector{<:TriangleCell},bfaces,bc_face,nodes)
             if t1 == el #future work make this a for t in tn, t == el
                 c2f_i1 = -j
                 bf2c[j] = BFace2Cell((i,))
-                bfn[j] = area(t1,nodes) #future work: make this a call to area(face,nodes)
+                bfn[j] = area(t1,nodes)
                 bfc[j] = center(t1,nodes)
                 bcv[j] = 1/volume(cell,nodes)
                 bccenter[j] = center(cell,nodes)
@@ -130,8 +130,8 @@ function face_connectivity(faces::Vector{<:Face2Node},c2f,cells::Vector{T},nodes
     NC = length(c2f)
     #VecType = nodetype(T)
     f2c = Vector{Face2Cell}(NF)
-    fn = Vector{Vec2D{Float64}}(NF)
-    fc = Vector{Vec2D{Float64}}(NF)
+    fn = Vec2DArray{Float64}(NF)
+    fc = Vec2DArray{Float64}(NF)
     cv = Vector{NTuple{2,Float64}}(NF)
     ccenter = Vector{NTuple{2,Vec2D{Float64}}}(NF)
  

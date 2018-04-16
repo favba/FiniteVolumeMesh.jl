@@ -6,7 +6,7 @@
 @inline triangle_perimeter(n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = norm(n2-n1)+norm(n3-n2)+norm(n1-n3)
 
 @inline normal_to_2Dline(n1::Vec2D,n2::Vec2D) = Vec2D(n2.y - n1.y, n1.x - n2.x)
-@inline function normal_to_2Dline(I::NTuple{2,Integer},nodes::Vector{<:Vec2D}) ; @inbounds r = normal_to_2Dline(nodes[I[1]], nodes[I[2]]); r; end
+@inline function normal_to_2Dline(I::NTuple{2,Integer},nodes::AbstractArray{<:Vec2D,1}) ; @inbounds r = normal_to_2Dline(nodes[I[1]], nodes[I[2]]); r; end
 
 @inline line_center(n1::AbstractVec,n2::AbstractVec) = 0.5*(n1+n2)
-@inline function line_center(I::NTuple{2,Integer},nodes::Vector{<:Vec2D}) ; @inbounds r = line_center(nodes[I[1]], nodes[I[2]]); return r; end
+@inline function line_center(I::NTuple{2,Integer},nodes::AbstractArray{<:Vec2D,1}) ; @inbounds r = line_center(nodes[I[1]], nodes[I[2]]); return r; end

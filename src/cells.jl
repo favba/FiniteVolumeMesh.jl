@@ -36,16 +36,16 @@ end
 cell_faces(a::TriangleCell) = Face2Node{2}((a[1], a[2])), Face2Node{2}((a[2], a[3])), Face2Node{2}((a[3], a[1]))
 
 @inline volume(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_area(n1,n2,n3)
-@inline function volume(a::TriangleCell,nodes::Vector{<:Vec2D}) ; @inbounds r = volume(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
+@inline function volume(a::TriangleCell,nodes::AbstractArray{<:Vec2D}) ; @inbounds r = volume(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
 
 @inline perimeter(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_perimeter(n1,n2,n3)
-@inline function perimeter(a::TriangleCell,nodes::Vector{<:Vec2D}) ; @inbounds r = perimeter(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
+@inline function perimeter(a::TriangleCell,nodes::AbstractArray{<:Vec2D}) ; @inbounds r = perimeter(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
 
 @inline mean_dx(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = 4*volume(a,n1,n2,n3)/perimeter(a,n1,n2,n3)
-@inline function mean_dx(a::TriangleCell,nodes::Vector{<:Vec2D}) ; @inbounds r = mean_dx(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r; end
+@inline function mean_dx(a::TriangleCell,nodes::AbstractArray{<:Vec2D}) ; @inbounds r = mean_dx(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r; end
 
 @inline center(a::TriangleCell,n1::AbstractVec,n2::AbstractVec,n3::AbstractVec) = triangle_center(n1,n2,n3)
-@inline function center(a::TriangleCell,nodes::Vector{<:Vec2D}) ; @inbounds r = center(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
+@inline function center(a::TriangleCell,nodes::AbstractArray{<:Vec2D}) ; @inbounds r = center(a, nodes[a[1]], nodes[a[2]], nodes[a[3]]); return r;end
 
 abstract type AbstractCell2Face{T,N} <: NTupleWrap{N,Int} end
 
