@@ -22,9 +22,9 @@ Base.dot(a::AbstractVec,b::AbstractVec) = muladd(xpos(a), xpos(b), muladd(ypos(a
 Base.cross(a::AbstractVec,b::AbstractVec) = Vec(ypos(a)*zpos(b) - zpos(a)*ypos(b), zpos(a)*xpos(b) - xpos(a)*zpos(b), xpos(a)*ypos(b) - ypos(a)*xpos(b))
 
 struct Vec{T<:Number} <: AbstractVec{T}
-  x::T
-  y::T
-  z::T
+    x::T
+    y::T
+    z::T
 end
 
 Base.size(a::Vec) = (3,)
@@ -35,8 +35,8 @@ Base.zero(a::Type{Vec{T}}) where {T} = Vec{T}(zero(T),zero(T),zero(T))
 Vec(x,y,z) = Vec(promote(x,y,z)...)
 
 struct Vec2D{T<:Number} <: AbstractVec{T}
-  x::T
-  y::T 
+    x::T
+    y::T 
 end
 
 Base.size(a::Vec2D) = (2,)
@@ -61,7 +61,7 @@ Base.norm(a::Vec2D) = sqrt(muladd(xpos(a), xpos(a), ypos(a)^2))
 Base.cross(a::Vec2D,b::Vec2D) = xpos(a)*ypos(b) - ypos(a)*xpos(b)
 
 struct Vec1D{T<:Number} <: AbstractVec{T}
-  x::T
+    x::T
 end
 
 Base.size(a::Vec1D) = (1,)
