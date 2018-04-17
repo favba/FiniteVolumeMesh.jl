@@ -64,9 +64,9 @@ struct Face2CellLoop{NBF,NF,VecType,ArrayVecType}
     ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
 end
 
-nbfaces(::Type{Face2CellLoop{NBF,NF,Vectype}}) where {NBF,NF,Vectype} = NBF
+nbfaces(::Type{Face2CellLoop{NBF,NF,Vectype,AV}}) where {NBF,NF,Vectype,AV} = NBF
 @inline nbfaces(a::A) where A<:Face2CellLoop = nbfaces(A)
-nfaces(::Type{Face2CellLoop{NBF,NF,Vectype}}) where {NBF,NF,Vectype} = NF
+nfaces(::Type{Face2CellLoop{NBF,NF,Vectype,AV}}) where {NBF,NF,Vectype,AV} = NF
 @inline nfaces(a::A) where A<:Face2CellLoop = nfaces(A)
 
 struct FaceSimpleInterpolation{T,NF} <: AbstractVector{T}

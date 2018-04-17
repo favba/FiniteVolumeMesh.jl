@@ -1,4 +1,4 @@
-function writevtk(outputname::String,nodes::Vector{<:AbstractVec},cells::Vector{<:TriangleCell})
+function writevtk(outputname::String,nodes::AbstractArray{<:AbstractVec},cells::Vector{<:TriangleCell})
     info("Writing to $outputname")
     open(outputname,"w") do output
         NN = length(nodes)
