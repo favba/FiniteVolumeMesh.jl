@@ -1,4 +1,10 @@
+# Implement A_mul_B! , evalT and evalP for AbstractMatrixLike
 abstract type AbstractMatrixLike end
+
+function Base.:*(A::AbstractMatrixLike,x::AbstractVector)
+    b = similar(x)
+    return A_mul_B!(b,A,x)
+end
 
 struct MimeticGrad{T,GradType,VecType,BcondType,NBF,NF} <: AbstractMatrixLike
     g::Vector{GradType} # cell stuff
@@ -179,10 +185,6 @@ function Base.A_mul_B!(out::FaceVector{T},A::MimeticGrad,inp::FaceVector{T}) whe
     return out
 end
 
-function Base.:*(A::AbstractMatrixLike,x::AbstractVector{T}) where {T}
-    b = similar(x)
-    return A_mul_B!(b,A,x)
-end
 
 struct ImplicitMethodB{MeshType,BcondType,Ktype,T} <: AbstractMatrixLike
     m::MeshType
