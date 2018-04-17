@@ -9,7 +9,7 @@ abstract type AbstractVecArray{T<:AbstractVec,N} <: AbstractArray{T,N} end
 @inline Base.linearindices(u::AbstractVecArray) =
     linearindices(u.x)
 
-Base.IndexStyle(u::AbstractVecArray) =
+Base.IndexStyle(::Type{<:AbstractVecArray}) =
     IndexLinear()
 
 struct VecArray{T<:Number,N} <: AbstractVecArray{Vec{T},N}
