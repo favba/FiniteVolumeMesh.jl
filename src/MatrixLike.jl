@@ -530,47 +530,20 @@ end
 
 struct PoissonP{MeshType} <: AbstractMatrixLike # (Div(b*Grad()))()
     m::MeshType
-    face_loop_value::Vector{Tuple{Float64,Float64}}
     diag::Vector{Float64}
     k::ConstVec{Float64}
     g::Vector{Vec2D{Float64}}
 end
 
 function PoissonP(d,m)
-    fl = set_face_loop_poisson(d,m)
     diag = set_diag_poisson(d,m)
     k = ConstVec(d[:dt]/d[:density])
     g = Vector{Vec2D{Float64}}(length(m.cells))
-    return PoissonP{typeof(m)}(m,fl,diag,k,g)
-end
-
-function set_face_loop_poisson(d,m)
-    floops = m.f2cloops
-    fn = floops.fn
-    f2c = floops.f2c
-    ccenter = floops.ccenter
-    k = d[:dt]/d[:density]
-    cv = floops.cv
-    NF = nfaces(floops)
-    fl = Vector{Tuple{Float64,Float64}}(NF)
-    @inbounds for i=1:NF
-        el = f2c[i]
-        j1 = el[1]
-        j2 = el[2]
-        n = fn[i] 
-        c = ccenter[i]
-        AfoLac = abs((n⋅n)/(n⋅(c[2] - c[1])))
-        qf = k*AfoLac
-  
-        v = cv[i]
-        fl[i] = (qf*v[1],qf*v[2])
-    end
-    return fl
+    return PoissonP{typeof(m)}(m,diag,k,g)
 end
 
 function set_diag_poisson(d,m)
     out = zeros(length(m.cells))
-
     floops = m.f2cloops
     bf2c = floops.bf2c
     bt = floops.bft 
@@ -585,23 +558,26 @@ function set_diag_poisson(d,m)
     ccenter = floops.ccenter
     cv = floops.cv
 
-    NF = nfaces(floops)
-    @inbounds for i=1:NF
-        el = f2c[i]
-        j1 = el[1]
-        j2 = el[2]
-        n = fn[i] 
-        c = ccenter[i]
-        AfoLac = abs((n⋅n)/(n⋅(c[2] - c[1])))
+    NBF = FiniteVolumeMesh.nbfaces(floops)
+    @inbounds for i=1:NBF
+        j = bf2c[i][1]
+        flux = 0.25 * (bfn[i]⋅bfn[i]) * bcv[i]
+        out[j] -= flux*k
+    end  
 
+    NF = FiniteVolumeMesh.nfaces(floops)
+    @inbounds for i=1:NF
+        j1,j2 = f2c[i]
+        flux = 0.25 * (fn[i]⋅fn[i]) * k
         v = cv[i]
-        out[j1] -= k*AfoLac*v[1]
-        out[j2] -= k*AfoLac*v[2]
+        out[j1] -= flux*v[1]
+        out[j2] -= flux*v[2]
     end  
 
     @inbounds for i in linearindices(out)
         out[i] = 1/out[i]
     end
+    
     return out
 end
 
@@ -652,19 +628,25 @@ function evalT(A::PoissonP,out::AbstractArray{T},inp::AbstractArray{T}) where {T
     pressure_div!(out,g,A.k[1],A.m.f2cloops)
 
     δ = zero(Float64)
+
     @inbounds for i in linearindices(out)
         δ += out[i]⋅inp[i]
     end
 
     return δ
+
 end
 
 function evalP(A::PoissonP,out::AbstractArray{T},inp::AbstractArray{T}) where {T}
+
     diag = A.diag
+
     δ = zero(Float64)
+
     @inbounds for i in linearindices(out)
         out[i] = inp[i]#*diag[i]
         δ += out[i]⋅inp[i]
     end
+
     return δ
 end
