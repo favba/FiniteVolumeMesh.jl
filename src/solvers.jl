@@ -59,11 +59,12 @@ function add_source!(rhs,p)
 end
 
 struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa,PMap} <: AbstractProblem
-    u::Vector{Vec2D{Float64}}
+    u::Vec2DArray{Float64}
+    u_old::Vec2DArray{Float64}
     uf::UfType
     ubf::UbfType
-    δu::Vector{Vec2D{Float64}}
-    ru::Vector{Vec2D{Float64}}
+    δu::Vec2DArray{Float64}
+    ru::Vec2DArray{Float64}
     p::Vector{Float64}
     δp::Vector{Float64}
     ν::ConstVec{Float64}
@@ -81,12 +82,13 @@ struct StokesProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,Ma,PMa,P
 end
 
 function StokesProblem(u,mesh,d)
+    u_old = similar(u)
     uf = FaceSimpleInterpolation(u,mesh)
     bcond = uboundary_conditions(d)
     ubf = FieldAtBoundary(u,mesh,bcond)
     δu = similar(u)
     ru = similar(u)
-    ν = ConstVec(d[:conductivity])
+    ν = ConstVec(d[:viscosity])
     ρ = ConstVec(d[:density])
     ∇u = zeros(Ten2D{Float64},length(u))
     p = zeros(length(u))
@@ -101,7 +103,7 @@ function StokesProblem(u,mesh,d)
     s = zeros(length(mesh.cells))
     Ap = PoissonP(d,mesh)
     dt = d[:dt]
-    return StokesProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s,Ap,pcgAp,dt)
+    return StokesProblem{types...}(u,u_old,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s,Ap,pcgAp,dt)
 end
 
 struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,Ma,PMa,PMap} <: AbstractProblem
