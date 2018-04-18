@@ -67,7 +67,7 @@ end
 Vec2DArray(x::AbstractArray,y) =
     Vec2DArray{eltype(x),ndims(x)}(x,y)
 
-Vec2DArray{T}(L::Integer) where T = Vec2DArray{T,1}(Array{T}(L),Array{T}(L))
+Vec2DArray{T}(L::Integer) where T = Vec2DArray{T,1}(zeros(T,L),zeros(T,L))
 
 @inline function Base.getindex(u::Vec2DArray{T,N},I) where {T,N}
     x = u.x
