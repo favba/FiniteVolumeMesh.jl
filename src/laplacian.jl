@@ -133,7 +133,7 @@ function (l::CorrectedGauss)(rhs,p::CellProblemAdvecTemp)
     laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
 end
 
-function (l::CorrectedGauss)(rhs,p::StokesProblem)
+function (l::CorrectedGauss)(rhs,p::Union{StokesProblem,NSProblem})
     laplacian_CGauss!(rhs, p.∇u, p.u, l.ff, p.ubf, p.ν, p.bcond, p.mesh.f2cloops)
 end
 
@@ -154,7 +154,7 @@ function (l::MethodB)(rhs,p::CellProblemAdvecTemp)
     laplacian_mB!(rhs, p.Tc, p.k, p.bcond, p.mesh.f2cloops)
 end
 
-function (l::MethodB)(rhs,p::StokesProblem)
+function (l::MethodB)(rhs,p::Union{StokesProblem,NSProblem})
     laplacian_mB!(rhs, p.u, p.ν, p.bcond, p.mesh.f2cloops)
 end
 

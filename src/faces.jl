@@ -69,18 +69,18 @@ nbfaces(::Type{Face2CellLoop{NBF,NF,Vectype,AV}}) where {NBF,NF,Vectype,AV} = NB
 nfaces(::Type{Face2CellLoop{NBF,NF,Vectype,AV}}) where {NBF,NF,Vectype,AV} = NF
 @inline nfaces(a::A) where A<:Face2CellLoop = nfaces(A)
 
-struct FaceSimpleInterpolation{T,NF} <: AbstractVector{T}
-    Tc::Vector{T}
+struct FaceSimpleInterpolation{T,VecT,NF} <: AbstractVector{T}
+    Tc::VecT
     f2c::Vector{Face2Cell}
 end
 
-FaceSimpleInterpolation(Tc,mesh) = FaceSimpleInterpolation{eltype(Tc),length(mesh.f2cloops.f2c)}(Tc,mesh.f2cloops.f2c)
+FaceSimpleInterpolation(Tc,mesh) = FaceSimpleInterpolation{eltype(Tc),typeof(Tc),length(mesh.f2cloops.f2c)}(Tc,mesh.f2cloops.f2c)
 
-Base.size(a::Type{FaceSimpleInterpolation{T,NF}}) where {T,NF} = (NF,)
+Base.size(a::Type{FaceSimpleInterpolation{T,VT,NF}}) where {T,VT,NF} = (NF,)
 @inline Base.size(a::A) where {A<:FaceSimpleInterpolation} = size(A)
-Base.length(a::Type{FaceSimpleInterpolation{T,NF}}) where {T,NF} = NF
+Base.length(a::Type{FaceSimpleInterpolation{T,VT,NF}}) where {T,VT,NF} = NF
 @inline Base.length(a::A) where {A<:FaceSimpleInterpolation} = length(A)
-Base.linearindices(a::FaceSimpleInterpolation{T,NF}) where {T,NF} = Base.OneTo(length(a))
+Base.linearindices(a::FaceSimpleInterpolation{T,VT,NF}) where {T,VT,NF} = Base.OneTo(length(a))
 Base.IndexStyle(::Type{FaceSimpleInterpolation}) = IndexLinear()
 @inline Base.@propagate_inbounds function Base.getindex(a::FaceSimpleInterpolation,I)
     j1,j2 = a.f2c[I]

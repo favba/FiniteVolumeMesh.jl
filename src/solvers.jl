@@ -103,3 +103,51 @@ function StokesProblem(u,mesh,d)
     dt = d[:dt]
     return StokesProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s,Ap,pcgAp,dt)
 end
+
+struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,Ma,PMa,PMap} <: AbstractProblem
+    u::Vec2DArray{Float64}
+    uf::UfType
+    ubf::UbfType
+    δu::Vec2DArray{Float64}
+    ru::Vec2DArray{Float64}
+    p::Vector{Float64}
+    δp::Vector{Float64}
+    ν::ConstVec{Float64}
+    ρ::ConstVec{Float64}
+    bcond::uBcondType
+    mesh::MeshType
+    laplacian!::LaplacianStruct
+    uadvection!::AdvecStruct
+    ∇u::Vector{FiniteVolumeMesh.Ten2D{Float64}}
+    A::Ma
+    pcgA::PMa
+    s::Vector{Float64}
+    Ap::PoissonP{MeshType}
+    pcgAp::PMap
+    dt::Float64
+end
+
+function NSProblem(u,mesh,d)
+    uf = FaceSimpleInterpolation(u,mesh)
+    bcond = uboundary_conditions(d)
+    ubf = FieldAtBoundary(u,mesh,bcond)
+    δu = Vec2DArray{Float64}(length(u))
+    ru = Vec2DArray{Float64}(length(u))
+    ν = ConstVec(d[:conductivity])
+    ρ = ConstVec(d[:density])
+    ∇u = zeros(Ten2D{Float64},length(u))
+    p = zeros(length(u))
+    δp = zeros(length(u))
+
+    laplacian = get_laplacian_method(u,bcond,ν,mesh,d)
+    A = aIpDbG(d,mesh)
+    pcgA = PCG(δu,KrylovCtrl("vPCG.set"))
+    pcgAp = PCG(δp,KrylovCtrl("pPCG.set"))
+    uadvection = UpWindAdvection(u,ubf,uf,ubf,mesh)
+    types = typeof.((uf,ubf,mesh,bcond,laplacian,uadvection,A,pcgA,pcgAp))
+
+    s = zeros(length(mesh.cells))
+    Ap = PoissonP(d,mesh)
+    dt = d[:dt]
+    return NSProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,uadvection,∇u,A,pcgA,s,Ap,pcgAp,dt)
+end

@@ -69,6 +69,8 @@ Vec2DArray(x::AbstractArray,y) =
 
 Vec2DArray{T}(L::Integer) where T = Vec2DArray{T,1}(zeros(T,L),zeros(T,L))
 
+Base.similar(a::Vec2DArray{T}) where {T} = Vec2DArray{T}(length(a))
+
 @inline function Base.getindex(u::Vec2DArray{T,N},I) where {T,N}
     x = u.x
     y = u.y
