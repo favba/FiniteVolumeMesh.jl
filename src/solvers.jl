@@ -106,7 +106,7 @@ function StokesProblem(u,mesh,d)
     return StokesProblem{types...}(u,u_old,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,∇u,A,pcgA,s,Ap,pcgAp,dt)
 end
 
-struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,Ma,PMa,PMap} <: AbstractProblem
+struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,Ma,PMa,PMap,TBcondType,TLaplacianStruct,TAdvectionStruct,TbfType,MaT,PMaT} <: AbstractProblem
     u::Vec2DArray{Float64}
     uf::UfType
     ubf::UbfType
@@ -123,10 +123,22 @@ struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,
     ∇u::Vector{FiniteVolumeMesh.Ten2D{Float64}}
     A::Ma
     pcgA::PMa
-    s::Vector{Float64}
+    sp::Vector{Float64}
     Ap::PoissonP{MeshType}
     pcgAp::PMap
     dt::Float64
+    Tc::Vector{Float64}
+    rT::Vector{Float64}
+    δT::Vector{Float64}
+    k::ConstVec{Float64}
+    s::ConstVec{Float64}
+    ρC::Float64
+    Tbcond::TBcondType
+    Tlaplacian!::TLaplacianStruct
+    Tadvection!::TAdvectionStruct
+    Tbf::TbfType
+    AT::MaT
+    pcgAT::PMaT
 end
 
 function NSProblem(u,mesh,d)
@@ -135,21 +147,37 @@ function NSProblem(u,mesh,d)
     ubf = FieldAtBoundary(u,mesh,bcond)
     δu = Vec2DArray{Float64}(length(u))
     ru = Vec2DArray{Float64}(length(u))
-    ν = ConstVec(d[:conductivity])
+    ν = ConstVec(d[:viscosity])
     ρ = ConstVec(d[:density])
     ∇u = zeros(Ten2D{Float64},length(u))
     p = zeros(length(u))
     δp = zeros(length(u))
 
-    laplacian = get_laplacian_method(u,bcond,ν,mesh,d)
-    A = aIpDbG(d,mesh)
+    laplacian = get_laplacian_method(u,bcond,ConstVec{Float64}(0.5*ν[1]),mesh,d)
+    A = aIpDbG(ConstVec(d[:density]/d[:dt]),-0.5*ν[1],d,mesh)
     pcgA = PCG(δu,KrylovCtrl("vPCG.set"))
     pcgAp = PCG(δp,KrylovCtrl("pPCG.set"))
-    uadvection = UpWindAdvection(u,ubf,uf,ubf,mesh)
-    types = typeof.((uf,ubf,mesh,bcond,laplacian,uadvection,A,pcgA,pcgAp))
+    uadvection = UpWindAdvection(u,ubf,u,ubf,mesh)
 
-    s = zeros(length(mesh.cells))
+    sp = zeros(length(mesh.cells))
     Ap = PoissonP(d,mesh)
     dt = d[:dt]
-    return NSProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,uadvection,∇u,A,pcgA,s,Ap,pcgAp,dt)
+
+    Tc = zeros(Float64,length(mesh.cells))
+    rT = zeros(Float64,length(mesh.cells))
+    dT = zeros(Float64,length(mesh.cells))
+    Tbcond = boundary_conditions(d)
+
+    k = ConstVec{Float64}(d[:conductivity])
+    s = ConstVec{Float64}(d[:source])
+    ρC = d[Symbol("rho*C")]
+    Tbf = FieldAtBoundary(Tc,mesh,Tbcond)
+
+    Tadvection = UpWindAdvection(Tc,Tbf,u,ubf,mesh)
+    Tlaplacian = get_laplacian_method(Tc,Tbcond,ConstVec{Float64}(0.5*k[1]),mesh,d)
+    AT = aIpDbG(ConstVec{Float64}(ρC/dt),-0.5*k[1],d,mesh)
+    pcgAT = PCG(dT,KrylovCtrl("tPCG.set"))
+
+    types = typeof.((uf,ubf,mesh,bcond,laplacian,uadvection,A,pcgA,pcgAp,Tbcond,Tlaplacian,Tadvection,Tbf,AT,pcgAT))
+    return NSProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,uadvection,∇u,A,pcgA,sp,Ap,pcgAp,dt,Tc,rT,dT,k,s,ρC,Tbcond,Tlaplacian,Tadvection,Tbf,AT,pcgAT)
 end

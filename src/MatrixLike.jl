@@ -224,6 +224,7 @@ function evalT(A::ImplicitMethodB,out::AbstractArray{T},inp::AbstractArray{T}) w
     fn = floops.fn
     ccenter = floops.ccenter
     cv = floops.cv
+    AoL = floops.AoL
   
     NF = nfaces(floops)
     @inbounds for i=1:NF
@@ -232,9 +233,7 @@ function evalT(A::ImplicitMethodB,out::AbstractArray{T},inp::AbstractArray{T}) w
         j2 = el[2]
         To = inp[j1]
         Ta = inp[j2]
-        n = fn[i] 
-        c = ccenter[i]
-        AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
+        AfoLac = AoL[i]#(n⋅n)/(n⋅(c[2] - c[1])) 
         qf = k[i]*(Ta-To)*AfoLac
   
         v = cv[i]
@@ -283,17 +282,14 @@ function evalP(A::ImplicitMethodB,out::AbstractArray{T},inp::AbstractArray{T}) w
     fn = floops.fn
     ccenter = floops.ccenter
     cv = floops.cv
+    AoL = floops.AoL
 
     NF = nfaces(floops)
     @inbounds for i=1:NF
         el = f2c[i]
         j1 = el[1]
         j2 = el[2]
-        To = inp[j1]
-        Ta = inp[j2]
-        n = fn[i] 
-        c = ccenter[i]
-        AfoLac = (n⋅n)/(n⋅(c[2] - c[1])) 
+        AfoLac = AoL[i]
         #qf = k[i]*(Ta-To)*AfoLac
   
         v = cv[i]
@@ -371,22 +367,22 @@ struct aIpDbG{MeshType,BType} <: AbstractMatrixLike # (aI() + Div(b*Grad()))()
     diag::Vector{Float64}
 end
 
-function aIpDbG(d,m)
-    a = ConstVec(d[:density]/d[:dt])
-    boudary, bfl = set_boundary_things(d,m)
-    fl = set_face_loop(d,m)
-    diag = set_diag(d,m)
+function aIpDbG(a,k,d,m)
+    #a = ConstVec(d[:density]/d[:dt])
+    #k = -0.5*d[:viscosity]
+    boudary, bfl = set_boundary_things(k,d,m)
+    fl = set_face_loop(k,d,m)
+    diag = set_diag(a,k,d,m)
     return aIpDbG{typeof(m),typeof(boudary)}(m,a,boudary,bfl,fl,diag)
 end
 
-function set_boundary_things(d,m)
+function set_boundary_things(k,d,m)
     floops = m.f2cloops
     bf2c = floops.bf2c
     bcond = uboundary_conditions(d)
     bt = floops.bft 
     bfc = floops.bfc 
     bfn = floops.bfn
-    k = -0.5*d[:viscosity]
     bccenter = floops.bccenter
     bcv = floops.bcv
 
@@ -406,12 +402,11 @@ function set_boundary_things(d,m)
     return boundary, bfl
 end
 
-function set_face_loop(d,m)
+function set_face_loop(k,d,m)
     floops = m.f2cloops
     fn = floops.fn
     f2c = floops.f2c
     ccenter = floops.ccenter
-    k = -0.5*d[:viscosity]
     cv = floops.cv
     NF = nfaces(floops)
     fl = Vector{Tuple{Float64,Float64}}(NF)
@@ -430,7 +425,7 @@ function set_face_loop(d,m)
     return fl
 end
 
-function set_diag(d,m)
+function set_diag(a,k,d,m)
     out = zeros(length(m.cells))
 
     floops = m.f2cloops
@@ -439,7 +434,6 @@ function set_diag(d,m)
     bt = floops.bft 
     bfc = floops.bfc 
     bfn = floops.bfn
-    k = -0.5*d[:viscosity]
     bccenter = floops.bccenter
     bcv = floops.bcv
   
@@ -475,9 +469,8 @@ function set_diag(d,m)
         out[j2] -= k*AfoLac*v[2]
     end  
 
-    a = d[:density]/d[:dt]
     @inbounds for i in linearindices(out)
-        out[i] = 1/(a + out[i])
+        out[i] = 1/(a[i] + out[i])
     end
     return out
 end

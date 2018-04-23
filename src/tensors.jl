@@ -55,3 +55,4 @@ Base.dot(b::Vec2D{T},a::Ten2D{T2}) where {T,T2} =
 
 Base.:*(a::Vec2D{T},b::Vec2D{T2}) where {T,T2} = 
     Ten2D{promote_type(T,T2)}(a.x*b.x, a.y*b.x, a.x*b.y, a.y*b.y)
+

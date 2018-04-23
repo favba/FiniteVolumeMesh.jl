@@ -133,8 +133,12 @@ function (l::CorrectedGauss)(rhs,p::CellProblemAdvecTemp)
     laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
 end
 
-function (l::CorrectedGauss)(rhs,p::Union{StokesProblem,NSProblem})
+function (l::CorrectedGauss)(rhs::Vec2DArray,p::Union{StokesProblem,NSProblem})
     laplacian_CGauss!(rhs, p.∇u, p.u, l.ff, p.ubf, p.ν, p.bcond, p.mesh.f2cloops)
+end
+
+function (l::CorrectedGauss)(rhs::AbstractArray{T,1},p::NSProblem) where T<:Number
+    laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
 end
 
 struct Gauss{ArrayType} <: AbstractLaplacian
@@ -154,8 +158,12 @@ function (l::MethodB)(rhs,p::CellProblemAdvecTemp)
     laplacian_mB!(rhs, p.Tc, p.k, p.bcond, p.mesh.f2cloops)
 end
 
-function (l::MethodB)(rhs,p::Union{StokesProblem,NSProblem})
+function (l::MethodB)(rhs::Vec2DArray,p::Union{StokesProblem,NSProblem})
     laplacian_mB!(rhs, p.u, p.ν, p.bcond, p.mesh.f2cloops)
+end
+
+function (l::MethodB)(rhs::AbstractArray{T,1},p::Union{StokesProblem,NSProblem}) where {T<:Number}
+    laplacian_mB!(rhs, p.Tc, p.k, p.Tbcond, p.mesh.f2cloops)
 end
 
 struct CellMimetic{M<:AbstractMatrixLike,P,ArrayT} <: AbstractLaplacian
@@ -269,7 +277,7 @@ end
 function ImplicitDiff(k,bcond,mesh,d)
     dtrhoc = d[:dt]*d[Symbol("rho*C")]
     A = ImplicitMethodB{typeof(mesh),typeof(bcond),typeof(k),typeof(dtrhoc)}(mesh,bcond,k,dtrhoc)
-    pcg = PCG(zeros(length(mesh.cells)))
+    pcg = PCG(zeros(length(mesh.cells)),KrylovCtrl("tPCG.set"))
     b = zeros(eltype(k),length(mesh.cells))
     return ImplicitDiff{typeof(A),typeof(pcg),eltype(k)}(A,pcg,b)
 end

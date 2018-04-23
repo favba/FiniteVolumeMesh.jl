@@ -62,6 +62,7 @@ struct Face2CellLoop{NBF,NF,VecType,ArrayVecType}
     fc::ArrayVecType # List of centers of faces
     cv::Vector{NTuple{2,Float64}} # List of 1/volumes of faces owner cells
     ccenter::Vector{NTuple{2,VecType}} # List of centers of faces owner cells
+    AoL::Vector{Float64}
 end
 
 nbfaces(::Type{Face2CellLoop{NBF,NF,Vectype,AV}}) where {NBF,NF,Vectype,AV} = NBF

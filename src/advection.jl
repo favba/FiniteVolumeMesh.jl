@@ -69,22 +69,30 @@ struct UpWindAdvection{FT,Fbf,VT,UBT,fl}
     fbf::Fbf
     an::FT
     anm1::FT
-    uf::VT
+    u::VT
     ubf::UBT
     floops::fl
 end
 
-function UpWindAdvection(f,fbf,uf,ubf,mesh)
+function UpWindAdvection(f,fbf,u,ubf,mesh)
     an = similar(f)
     anm1 = similar(an)
+    fill!(an,zero(eltype(an)))
+    fill!(anm1,zero(eltype(an)))
     fl = mesh.f2cloops
-    return UpWindAdvection{typeof(f),typeof(fbf),typeof(uf),typeof(ubf),typeof(fl)}(f,fbf,an,anm1,uf,ubf,fl)
+    return UpWindAdvection{typeof(f),typeof(fbf),typeof(u),typeof(ubf),typeof(fl)}(f,fbf,an,anm1,u,ubf,fl)
+end
+
+function mycopy!(rhs,inp)
+    @inbounds for i in linearindices(rhs)
+        rhs[i] = inp[i]
+    end
 end
 
 function (Up::UpWindAdvection)()
 
     # Copy An to An-1
-    copy!(Up.anm1,Up.an)
+    mycopy!(Up.anm1,Up.an)
 
     rhs = Up.an
     fill!(rhs,zero(eltype(rhs)))
@@ -92,7 +100,7 @@ function (Up::UpWindAdvection)()
     floops = Up.floops
     bf2c = floops.bf2c
     Tbf = Up.fbf
-    buvec = Up.uf
+    buvec = Up.ubf
     bfn = floops.bfn
     bcv = floops.bcv
 
@@ -105,7 +113,7 @@ function (Up::UpWindAdvection)()
     f2c = floops.f2c
     fn = floops.fn
     cv = floops.cv
-    uvec = Up.uf
+    u = Up.u
     Tc = Up.f
 
     NF = nfaces(floops)
@@ -113,7 +121,8 @@ function (Up::UpWindAdvection)()
         j1, j2 = f2c[i]
         n = fn[i]
         v1, v2 = cv[i]
-        udotn = uvec[i] ⋅ n
+        uvec = 0.5*(u[j1]+u[j2])
+        udotn = uvec ⋅ n
         if udotn >= 0
             Tf = Tc[j1]
         else
@@ -131,7 +140,8 @@ function (Up::UpWindAdvection)(rhs)
     anm1 = Up.anm1
 
     @inbounds for i in linearindices(rhs)
-        rhs[i] += 1.5*an[i] - 0.5*anm1[i]
+        rhs[i] -= 1.5*an[i] - 0.5*anm1[i]
+        #rhs[i] -= an[i]
     end
 
 end

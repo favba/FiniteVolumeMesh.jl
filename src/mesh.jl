@@ -8,6 +8,7 @@ struct HomogeneousMesh{VecArrayType,VecType<:AbstractVec,CellType<:AbstractCell2
     c2f::Vector{NTuple{CNF,Int}}
   #  f2c::Vector{Face2Cell}
   #  bf2c::Vector{BFace2Cell}
+    cv::Vector{Float64}
     f2cloops::Face2CellLoop{NBF,NF,VecType}
 end
 
@@ -26,12 +27,23 @@ end
 
 function HomogeneousMesh(inputfile::AbstractString)
     nodes, cells, bc_cell, bfaces, bc_face = readneutral(inputfile)
+    cv = (x-> 1/(volume(x,nodes))).(cells) 
     faces, c2f, bf2c, bfn, bfc, bcv, bccenter = cell_connectivity(cells,bfaces,bc_face,nodes)
-    f2c, fn, fc, cv, ccenter = face_connectivity(faces,c2f,cells,nodes)
+    f2c, fn, fc, cvf, ccenter = face_connectivity(faces,c2f,cells,nodes)
     CellType = eltype(cells)
     CNF = nfaces(CellType)
-    f2cloops = Face2CellLoop{length(bfaces),length(faces),eltype(nodes),typeof(fn)}(bf2c,bc_face,bfn,bfc,bcv,bccenter,f2c,fn,fc,cv,ccenter)
-    return HomogeneousMesh{typeof(nodes),eltype(nodes),CellType,CNF,eltype(faces),length(bfaces),length(faces)}(nodes,cells,faces,bfaces,c2f,f2cloops)
+    f2cloops = Face2CellLoop{length(bfaces),length(faces),eltype(nodes),typeof(fn)}(bf2c,bc_face,bfn,bfc,bcv,bccenter,f2c,fn,fc,cvf,ccenter,get_AoL(f2c,fn,ccenter))
+    return HomogeneousMesh{typeof(nodes),eltype(nodes),CellType,CNF,eltype(faces),length(bfaces),length(faces)}(nodes,cells,faces,bfaces,c2f,cv,f2cloops)
+end
+
+function get_AoL(f2c,fn,cc)
+    AoL = zeros(length(fn))
+    @inbounds for i in linearindices(f2c)
+        n = fn[i]
+        c = cc[i]
+        AoL[i] = (n⋅n)/(n⋅(c[2] - c[1]))
+    end
+    return AoL
 end
 
 HomogeneousMesh(d::Dict) = HomogeneousMesh(d[:meshfilename])
