@@ -138,7 +138,7 @@ function (l::CorrectedGauss)(rhs::Vec2DArray,p::Union{StokesProblem,NSProblem})
 end
 
 function (l::CorrectedGauss)(rhs::AbstractArray{T,1},p::NSProblem) where T<:Number
-    laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.bcond, p.mesh.f2cloops)
+    laplacian_CGauss!(rhs, p.∇Tc, p.Tc, l.ff, p.Tbf, p.k, p.Tbcond, p.mesh.f2cloops)
 end
 
 struct Gauss{ArrayType} <: AbstractLaplacian

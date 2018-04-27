@@ -128,6 +128,7 @@ struct NSProblem{UfType,UbfType,MeshType,uBcondType,LaplacianStruct,AdvecStruct,
     pcgAp::PMap
     dt::Float64
     Tc::Vector{Float64}
+    ∇Tc::Vec2DArray{Float64}
     rT::Vector{Float64}
     δT::Vector{Float64}
     k::ConstVec{Float64}
@@ -164,6 +165,7 @@ function NSProblem(u,mesh,d)
     dt = d[:dt]
 
     Tc = zeros(Float64,length(mesh.cells))
+    ∇Tc = Vec2DArray{Float64}(length(u))
     rT = zeros(Float64,length(mesh.cells))
     dT = zeros(Float64,length(mesh.cells))
     Tbcond = boundary_conditions(d)
@@ -179,5 +181,5 @@ function NSProblem(u,mesh,d)
     pcgAT = PCG(dT,KrylovCtrl("tPCG.set"))
 
     types = typeof.((uf,ubf,mesh,bcond,laplacian,uadvection,A,pcgA,pcgAp,Tbcond,Tlaplacian,Tadvection,Tbf,AT,pcgAT))
-    return NSProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,uadvection,∇u,A,pcgA,sp,Ap,pcgAp,dt,Tc,rT,dT,k,s,ρC,Tbcond,Tlaplacian,Tadvection,Tbf,AT,pcgAT)
+    return NSProblem{types...}(u,uf,ubf,δu,ru,p,δp,ν,ρ,bcond,mesh,laplacian,uadvection,∇u,A,pcgA,sp,Ap,pcgAp,dt,Tc,∇Tc,rT,dT,k,s,ρC,Tbcond,Tlaplacian,Tadvection,Tbf,AT,pcgAT)
 end

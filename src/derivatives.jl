@@ -1,4 +1,4 @@
-function gradient!(out::Vector, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,floop::Face2CellLoop)
+function gradient!(out::AbstractArray, f_at_face, f_at_bface, bf2c,bfn,bcv,f2c,fn,cv,floop::Face2CellLoop)
     fill!(out,zero(eltype(out)))
     NBF = nbfaces(floop)
     @inbounds for i=1:NBF
